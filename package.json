@@ -1,12 +1,13 @@
 {
-  "name": "diploma-frontend",
+  "name": "gatherly",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.14",
+    "sharp": "^0.34.5",
     "typescript": "~6.0.3"
   },
   "private": true

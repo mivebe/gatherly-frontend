@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useMemo } from 'react';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator } from 'react-native';
@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../context/AuthContext';
-import { colors, font, nav, shadow } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { font, nav, depth } from '../theme';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import EventsListScreen from '../screens/EventsListScreen';
@@ -31,10 +32,11 @@ const TabIcon =
     <Ionicons name={name} size={size ?? 22} color={color} style={{ opacity: focused ? 1 : 0.6 }} />;
 
 function useTabScreenOptions() {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const basePaddingBottom = 8;
   return {
-    tabBarActiveTintColor: nav.tabActiveTint,
+    tabBarActiveTintColor:   colors.primary,
     tabBarInactiveTintColor: colors.textMuted,
     tabBarLabelPosition: 'below-icon' as const,
     tabBarLabelStyle: {
@@ -50,23 +52,26 @@ function useTabScreenOptions() {
       paddingBottom: basePaddingBottom + insets.bottom,
       backgroundColor: colors.surface,
       borderTopColor: colors.borderLight,
-      ...shadow.sm,
+      ...depth.level0,
     },
     tabBarAllowFontScaling: false,
-    headerStyle: { backgroundColor: nav.headerBg, ...shadow.sm },
-    headerTintColor: nav.headerTint,
+    headerStyle: { backgroundColor: colors.surface, ...depth.level0 },
+    headerTintColor: colors.text,
     headerTitleStyle: { fontWeight: font.semibold as any, fontSize: font.size.lg },
     headerShadowVisible: false,
   };
 }
 
-const stackHeaderOptions = {
-  headerStyle: { backgroundColor: nav.headerBg },
-  headerTintColor: nav.headerTint,
-  headerTitleStyle: { fontWeight: font.semibold as any, fontSize: font.size.lg },
-  headerShadowVisible: false,
-  headerBackTitleVisible: false,
-};
+function useStackHeaderOptions() {
+  const { colors } = useTheme();
+  return {
+    headerStyle: { backgroundColor: colors.surface },
+    headerTintColor: colors.text,
+    headerTitleStyle: { fontWeight: font.semibold as any, fontSize: font.size.lg },
+    headerShadowVisible: false,
+    headerBackTitleVisible: false,
+  };
+}
 
 function UserTabs() {
   const tabScreenOptions = useTabScreenOptions();
@@ -102,6 +107,25 @@ function OrganizerTabs() {
 
 export default function RootNavigator() {
   const { user, loading } = useAuth();
+  const { colors, isDark } = useTheme();
+  const stackHeaderOptions = useStackHeaderOptions();
+
+  const navTheme = useMemo(() => {
+    const base = isDark ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary:    colors.primary,
+        background: colors.background,
+        card:       colors.surface,
+        text:       colors.text,
+        border:     colors.borderLight,
+        notification: colors.danger,
+      },
+    };
+  }, [colors, isDark]);
+
   if (loading) return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
       <ActivityIndicator size="large" color={colors.primary} />
@@ -109,7 +133,7 @@ export default function RootNavigator() {
   );
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       {user ? (
         <AppStack.Navigator screenOptions={stackHeaderOptions}>
           <AppStack.Screen name="Home" options={{ headerShown: false }}

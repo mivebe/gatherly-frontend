@@ -1,16 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
-import { colors, spacing, font, radius, depth } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, radius, depth, ThemeColors } from '../theme';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
 import Avatar from '../components/Avatar';
 
 export default function EventReservationsScreen({ route }: any) {
+  const { colors } = useTheme();
   const { id } = route.params;
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -31,7 +34,7 @@ export default function EventReservationsScreen({ route }: any) {
       ListHeaderComponent={
         <View style={s.summary}>
           <View style={s.statBox}>
-            <Text style={s.statNum}>{confirmed.length}</Text>
+            <Text style={[s.statNum, { color: colors.primary }]}>{confirmed.length}</Text>
             <Text style={s.statLabel}>Резервации</Text>
           </View>
           <View style={s.statDivider} />
@@ -70,34 +73,36 @@ export default function EventReservationsScreen({ route }: any) {
   );
 }
 
-const s = StyleSheet.create({
-  list: { padding: spacing.md, paddingBottom: spacing.xxl },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list: { padding: spacing.md, paddingBottom: spacing.xxl },
 
-  summary: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    borderWidth: 1, borderColor: colors.borderLight,
-    ...depth.level1,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  statBox:     { flex: 1, alignItems: 'center' },
-  statNum:     { fontSize: 32, fontWeight: font.bold, color: colors.primary, lineHeight: 36 },
-  statLabel:   { fontSize: font.size.xs, color: colors.textMuted, marginTop: spacing.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statDivider: { width: 1, height: 40, backgroundColor: colors.borderLight },
+    summary: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.md,
+      borderWidth: 1, borderColor: colors.borderLight,
+      ...depth.level1,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    statBox:     { flex: 1, alignItems: 'center' },
+    statNum:     { fontSize: 32, fontWeight: font.bold, lineHeight: 36 },
+    statLabel:   { fontSize: font.size.xs, color: colors.textMuted, marginTop: spacing.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
+    statDivider: { width: 1, height: 40, backgroundColor: colors.borderLight },
 
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    padding: spacing.md, marginBottom: spacing.sm,
-    borderWidth: 1, borderColor: colors.borderLight,
-    ...depth.level0,
-    gap: spacing.md,
-  },
-  info:     { flex: 1, minWidth: 0 },
-  name:     { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
-  email:    { fontSize: font.size.xs, color: colors.textMuted, marginTop: 1 },
-  dateMeta: { fontSize: font.size.xs, color: colors.textSecondary, marginTop: spacing.xs },
-});
+    row: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.surface, borderRadius: radius.lg,
+      padding: spacing.md, marginBottom: spacing.sm,
+      borderWidth: 1, borderColor: colors.borderLight,
+      ...depth.level0,
+      gap: spacing.md,
+    },
+    info:     { flex: 1, minWidth: 0 },
+    name:     { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
+    email:    { fontSize: font.size.xs, color: colors.textMuted, marginTop: 1 },
+    dateMeta: { fontSize: font.size.xs, color: colors.textSecondary, marginTop: spacing.xs },
+  });
+}

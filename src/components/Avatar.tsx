@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, radius, font, rgba } from '../theme';
+import { radius, font, rgba } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 type Size = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -18,6 +19,7 @@ export default function Avatar({
   size?: Size;
   color?: string;
 }) {
+  const { colors } = useTheme();
   const initials = name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const sz = sizes[size];
   const bg = color || colors.primary;

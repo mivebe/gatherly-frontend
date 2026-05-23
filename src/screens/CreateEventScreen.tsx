@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { colors, spacing, font, radius, depth } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, radius, depth, ThemeColors } from '../theme';
 import { api } from '../api/client';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 import SectionHeader from '../components/SectionHeader';
 
 export default function CreateEventScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation]       = useState('');
   const [startAt, setStartAt]         = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 16));
   const [capacity, setCapacity]       = useState('20');
   const [busy, setBusy]               = useState(false);
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const submit = async () => {
     if (!title || !startAt || !capacity) {
@@ -86,15 +89,17 @@ export default function CreateEventScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
-  wrap:  { padding: spacing.md, paddingBottom: spacing.xxl },
-  intro: { fontSize: font.size.sm, color: colors.textMuted, marginBottom: spacing.md, lineHeight: 18 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1, borderColor: colors.borderLight,
-    marginBottom: spacing.md,
-    ...depth.level1,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap:  { padding: spacing.md, paddingBottom: spacing.xxl },
+    intro: { fontSize: font.size.sm, color: colors.textMuted, marginBottom: spacing.md, lineHeight: 18 },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      borderWidth: 1, borderColor: colors.borderLight,
+      marginBottom: spacing.md,
+      ...depth.level1,
+    },
+  });
+}

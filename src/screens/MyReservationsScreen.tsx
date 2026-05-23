@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
-import { colors, spacing, font } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, ThemeColors } from '../theme';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 import MetaRow from '../components/MetaRow';
@@ -11,8 +12,10 @@ import EmptyState from '../components/EmptyState';
 import DateBadge from '../components/DateBadge';
 
 export default function MyReservationsScreen() {
+  const { colors } = useTheme();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -23,9 +26,7 @@ export default function MyReservationsScreen() {
   const cancel = (id: number) => {
     Alert.alert('Отказ на резервация', 'Сигурни ли сте, че желаете да откажете?', [
       { text: 'Не' },
-      { text: 'Да, откажи', style: 'destructive', onPress: async () => {
-          await api.cancelReservation(id); load();
-      }},
+      { text: 'Да, откажи', style: 'destructive', onPress: async () => { await api.cancelReservation(id); load(); } },
     ]);
   };
 
@@ -65,11 +66,7 @@ export default function MyReservationsScreen() {
                     icon={cancelled ? 'close-circle' : 'checkmark-circle'}
                   />
                 </View>
-                <MetaRow
-                  icon="time-outline"
-                  text={start.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
-                  dense
-                />
+                <MetaRow icon="time-outline" text={start.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })} dense />
                 {item.location ? <MetaRow icon="location-outline" text={item.location} dense /> : null}
                 <MetaRow icon="people-outline" text={`${item.seats} ${item.seats === 1 ? 'място' : 'места'}`} dense />
               </View>
@@ -91,14 +88,16 @@ export default function MyReservationsScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  list:   { padding: spacing.md, paddingBottom: spacing.xxl },
-  header: { marginTop: spacing.sm, marginBottom: spacing.md },
-  headerTitle: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text },
-  headerSub:   { fontSize: font.size.sm,  color: colors.textMuted, marginTop: 2 },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list:   { padding: spacing.md, paddingBottom: spacing.xxl },
+    header: { marginTop: spacing.sm, marginBottom: spacing.md },
+    headerTitle: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text },
+    headerSub:   { fontSize: font.size.sm,  color: colors.textMuted, marginTop: 2 },
 
-  row:      { flexDirection: 'row', alignItems: 'flex-start' },
-  body:     { flex: 1, marginLeft: spacing.md },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.xs + 2, gap: spacing.sm },
-  title:    { fontSize: font.size.lg, fontWeight: font.bold, color: colors.text, flex: 1, lineHeight: 22 },
-});
+    row:      { flexDirection: 'row', alignItems: 'flex-start' },
+    body:     { flex: 1, marginLeft: spacing.md },
+    titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.xs + 2, gap: spacing.sm },
+    title:    { fontSize: font.size.lg, fontWeight: font.bold, color: colors.text, flex: 1, lineHeight: 22 },
+  });
+}

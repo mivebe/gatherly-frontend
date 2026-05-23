@@ -5,7 +5,7 @@ if (!API_URL) {
   throw new Error('EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and fill it in.');
 }
 
-const TOKEN_KEY = 'diploma_token';
+const TOKEN_KEY = 'gatherly_token';
 
 export async function getToken() {
   return AsyncStorage.getItem(TOKEN_KEY);

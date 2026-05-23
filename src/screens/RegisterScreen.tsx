@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Alert,
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, font, radius, depth, rgba } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, radius, depth, rgba, ThemeColors } from '../theme';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function RegisterScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const { register } = useAuth();
   const [full_name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,6 +21,7 @@ export default function RegisterScreen({ navigation }: any) {
   const [showPw, setShowPw] = useState(false);
   const [role, setRole] = useState<'user' | 'organizer'>('user');
   const [busy, setBusy] = useState(false);
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const submit = async () => {
     setBusy(true);
@@ -61,16 +64,10 @@ export default function RegisterScreen({ navigation }: any) {
 
           <Text style={s.roleTitle}>Тип акаунт</Text>
           <View style={s.roleRow}>
-            <RoleCard
-              r="user"   active={role === 'user'}      onSelect={setRole}
-              icon="person-outline" label="Потребител"
-              desc="Резервирайте за събития"
-            />
-            <RoleCard
-              r="organizer" active={role === 'organizer'} onSelect={setRole}
-              icon="briefcase-outline" label="Организатор"
-              desc="Създавайте свои събития"
-            />
+            <RoleCard r="user"      active={role === 'user'}      onSelect={setRole}
+              icon="person-outline"    label="Потребител"  desc="Резервирайте за събития" />
+            <RoleCard r="organizer" active={role === 'organizer'} onSelect={setRole}
+              icon="briefcase-outline" label="Организатор" desc="Създавайте свои събития" />
           </View>
 
           <Button label="Създай акаунт" onPress={submit} loading={busy} size="lg" style={{ marginTop: spacing.lg }} />
@@ -97,6 +94,8 @@ function RoleCard({
   label: string;
   desc: string;
 }) {
+  const { colors } = useTheme();
+  const s = useMemo(() => createStyles(colors), [colors]);
   return (
     <TouchableOpacity
       style={[
@@ -117,39 +116,41 @@ function RoleCard({
   );
 }
 
-const s = StyleSheet.create({
-  wrap:   { flex: 1, backgroundColor: colors.background },
-  scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xl },
-  back:   { width: 40, height: 40, justifyContent: 'center', marginBottom: spacing.sm },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap:   { flex: 1, backgroundColor: colors.background },
+    scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xl },
+    back:   { width: 40, height: 40, justifyContent: 'center', marginBottom: spacing.sm },
 
-  header:   { marginBottom: spacing.lg, paddingHorizontal: spacing.sm },
-  title:    { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text },
-  subtitle: { fontSize: font.size.sm, color: colors.textMuted, marginTop: 4 },
+    header:   { marginBottom: spacing.lg, paddingHorizontal: spacing.sm },
+    title:    { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text },
+    subtitle: { fontSize: font.size.sm, color: colors.textMuted, marginTop: 4 },
 
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: 1, borderColor: colors.borderLight,
-    ...depth.level2,
-  },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      borderWidth: 1, borderColor: colors.borderLight,
+      ...depth.level2,
+    },
 
-  roleTitle: { fontSize: font.size.sm, fontWeight: font.medium, color: colors.textSecondary, marginBottom: spacing.sm, marginTop: spacing.xs },
-  roleRow:   { flexDirection: 'row', gap: spacing.sm },
-  roleCard:  {
-    flex: 1, borderWidth: 1.5, borderRadius: radius.md,
-    padding: spacing.md, alignItems: 'flex-start',
-  },
-  roleIconBox: {
-    width: 36, height: 36, borderRadius: radius.sm,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  roleLabel: { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
-  roleDesc:  { fontSize: font.size.xs, color: colors.textMuted, marginTop: 2 },
+    roleTitle: { fontSize: font.size.sm, fontWeight: font.medium, color: colors.textSecondary, marginBottom: spacing.sm, marginTop: spacing.xs },
+    roleRow:   { flexDirection: 'row', gap: spacing.sm },
+    roleCard:  {
+      flex: 1, borderWidth: 1.5, borderRadius: radius.md,
+      padding: spacing.md, alignItems: 'flex-start',
+    },
+    roleIconBox: {
+      width: 36, height: 36, borderRadius: radius.sm,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: spacing.sm,
+    },
+    roleLabel: { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
+    roleDesc:  { fontSize: font.size.xs, color: colors.textMuted, marginTop: 2 },
 
-  footerLink: { marginTop: spacing.lg, alignItems: 'center' },
-  footerText: { color: colors.textSecondary, fontSize: font.size.md },
-  footerCta:  { color: colors.primary, fontWeight: font.semibold },
-});
+    footerLink: { marginTop: spacing.lg, alignItems: 'center' },
+    footerText: { color: colors.textSecondary, fontSize: font.size.md },
+    footerCta:  { color: colors.primary, fontWeight: font.semibold },
+  });
+}

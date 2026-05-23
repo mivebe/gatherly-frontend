@@ -1,17 +1,18 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
-import { colors, spacing, font } from '../theme';
+import { spacing, font } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
-/** Секционно заглавие – uppercase, малък шрифт, spacing (bekar стил) */
+/** Секционно заглавие – uppercase, малък шрифт, spacing. */
 export default function SectionHeader({ title }: { title: string }) {
-  return <Text style={s.text}>{title}</Text>;
+  const { colors } = useTheme();
+  return <Text style={[s.text, { color: colors.textMuted }]}>{title}</Text>;
 }
 
 const s = StyleSheet.create({
   text: {
     fontSize: font.size.xs,
     fontWeight: font.semibold,
-    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.sm + 4,

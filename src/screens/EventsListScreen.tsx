@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, RefreshControl, TextInput, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
-import { colors, spacing, font, radius, depth } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, radius, depth, ThemeColors } from '../theme';
 import Card from '../components/Card';
 import MetaRow from '../components/MetaRow';
 import CapacityBar from '../components/CapacityBar';
@@ -13,9 +14,11 @@ import SectionHeader from '../components/SectionHeader';
 import DateBadge from '../components/DateBadge';
 
 export default function EventsListScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const [events, setEvents] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -109,25 +112,27 @@ export default function EventsListScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
-  list: { padding: spacing.md, paddingBottom: spacing.xl },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list: { padding: spacing.md, paddingBottom: spacing.xl },
 
-  headerTitle: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text, marginTop: spacing.sm, marginBottom: 2 },
-  headerSub:   { fontSize: font.size.sm,  color: colors.textMuted, marginBottom: spacing.md },
+    headerTitle: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text, marginTop: spacing.sm, marginBottom: 2 },
+    headerSub:   { fontSize: font.size.sm,  color: colors.textMuted, marginBottom: spacing.md },
 
-  searchWrap: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.md,
-    paddingHorizontal: spacing.md, marginBottom: spacing.sm,
-    borderWidth: 1, borderColor: colors.borderLight,
-    ...depth.level0,
-  },
-  searchInput: { flex: 1, paddingVertical: spacing.sm + 4, fontSize: font.size.md, color: colors.text },
+    searchWrap: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.surface, borderRadius: radius.md,
+      paddingHorizontal: spacing.md, marginBottom: spacing.sm,
+      borderWidth: 1, borderColor: colors.borderLight,
+      ...depth.level0,
+    },
+    searchInput: { flex: 1, paddingVertical: spacing.sm + 4, fontSize: font.size.md, color: colors.text },
 
-  cardHeader: { flexDirection: 'row', alignItems: 'flex-start' },
-  body:      { flex: 1, marginLeft: spacing.md },
-  titleRow:  { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.xs + 2 },
-  title:     { fontSize: font.size.lg, fontWeight: font.bold, color: colors.text, flex: 1, marginRight: spacing.sm, lineHeight: 22 },
+    cardHeader: { flexDirection: 'row', alignItems: 'flex-start' },
+    body:       { flex: 1, marginLeft: spacing.md },
+    titleRow:   { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.xs + 2 },
+    title:      { fontSize: font.size.lg, fontWeight: font.bold, color: colors.text, flex: 1, marginRight: spacing.sm, lineHeight: 22 },
 
-  badgeRow: { flexDirection: 'row', gap: spacing.xs + 2, marginTop: spacing.xs + 2, flexWrap: 'wrap' },
-});
+    badgeRow: { flexDirection: 'row', gap: spacing.xs + 2, marginTop: spacing.xs + 2, flexWrap: 'wrap' },
+  });
+}

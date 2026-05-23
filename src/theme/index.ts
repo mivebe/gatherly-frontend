@@ -3,8 +3,7 @@
  * ДИЗАЙН СИСТЕМА  ·  EventBook
  * ─────────────────────────────────────────────────────────────────────
  * Архитектура вдъхновена от bekar-frontend.
- *   • BRAND секция за бърза промяна на палитрата
- *   • Отделни light/dark палитри (готови за бъдещ toggle)
+ *   • Поддръжка на light / dark / system теми (виж ThemeContext)
  *   • 5-степенна дълбочина на сенки (level0 – level4)
  *   • 8px spacing grid, radius скала с full = 9999
  * ─────────────────────────────────────────────────────────────────────
@@ -33,7 +32,7 @@ export function rgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// ─── LIGHT THEME (default) ──────────────────────────────────────────
+// ─── LIGHT THEME ────────────────────────────────────────────────────
 export const lightColors = {
   primary:       BRAND.hue,
   primaryDark:   '#0B7269',
@@ -72,15 +71,19 @@ export const lightColors = {
 
   overlay:       'rgba(15,23,42,0.45)',
   shimmer:       '#EBEEF2',
+
+  // Legacy aliases
+  textPrimary:   '#0F172A',
+  inputBg:       '#FFFFFF',
 };
 
-// ─── DARK THEME (готов за бъдещо превключване) ──────────────────────
-export const darkColors = {
+// ─── DARK THEME ─────────────────────────────────────────────────────
+export const darkColors: typeof lightColors = {
   primary:       BRAND.accent,
   primaryDark:   BRAND.hue,
   primaryLight:  '#2DD4BF',
-  primaryFaded:  '#0D2A2A',
-  primarySoft:   '#103838',
+  primaryFaded:  '#0E2826',
+  primarySoft:   '#103834',
 
   secondary:     BRAND.warm,
   secondaryDark: '#C2410C',
@@ -113,16 +116,23 @@ export const darkColors = {
 
   overlay:       'rgba(0,0,0,0.6)',
   shimmer:       '#1F2733',
+
+  // Legacy aliases
+  textPrimary:   '#F1F5F9',
+  inputBg:       '#161C25',
 };
 
-// ─── Активна палитра + legacy aliases ──────────────────────────────
-const active = lightColors;
-export const colors = {
-  ...active,
-  // Legacy aliases (запазват backwards compatibility)
-  textPrimary: active.text,
-  inputBg:     active.surface,
-};
+export type ThemeColors = typeof lightColors;
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+/** Резолва палитра според избран режим + системна schema. */
+export function resolveColors(mode: ThemeMode, systemScheme: 'light' | 'dark' | null | undefined): ThemeColors {
+  const effective = mode === 'system' ? (systemScheme ?? 'light') : mode;
+  return effective === 'dark' ? darkColors : lightColors;
+}
+
+/** Палитра по подразбиране (за non-React контексти). */
+export const colors: ThemeColors = lightColors;
 
 // ─── SPACING (8px grid) ─────────────────────────────────────────────
 export const spacing = {
@@ -171,48 +181,13 @@ export const font = {
   },
 };
 
-// ─── 5-СТЕПЕННА ДЪЛБОЧИНА (bekar-style) ─────────────────────────────
+// ─── 5-СТЕПЕННА ДЪЛБОЧИНА ───────────────────────────────────────────
 export const depth = {
-  /** Flat – минимално разделяне */
-  level0: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  /** Low – леко повдигнати карти */
-  level1: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  /** Medium – стандартни карти */
-  level2: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 4,
-  },
-  /** High – плаващи елементи (FAB, модали) */
-  level3: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    elevation: 8,
-  },
-  /** Highest – CTA, hero банери */
-  level4: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.18,
-    shadowRadius: 32,
-    elevation: 14,
-  },
+  level0: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 },  shadowOpacity: 0.04, shadowRadius:  2, elevation: 1 },
+  level1: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },  shadowOpacity: 0.06, shadowRadius:  8, elevation: 2 },
+  level2: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },  shadowOpacity: 0.08, shadowRadius: 14, elevation: 4 },
+  level3: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 },  shadowOpacity: 0.12, shadowRadius: 22, elevation: 8 },
+  level4: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.18, shadowRadius: 32, elevation: 14 },
 };
 
 /** Backwards-compatible aliases */
@@ -224,14 +199,9 @@ export const shadow = {
 export const cardShadow = depth.level2;
 
 // ─── НАВИГАЦИЯ ───────────────────────────────────────────────────────
-export const nav = {
-  headerBg:      colors.surface,
-  headerTint:    colors.text,
-  tabActiveTint: colors.primary,
-  tabBarHeight:  60,
-};
+export const nav = { tabBarHeight: 60 };
 
-// ─── АНИМАЦИЯ (timing стойности) ─────────────────────────────────────
+// ─── АНИМАЦИЯ ─────────────────────────────────────────────────────────
 export const animation = {
   fast:    150,
   normal:  300,

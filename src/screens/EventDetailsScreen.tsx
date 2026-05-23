@@ -1,20 +1,22 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, font, radius, depth, rgba } from '../theme';
-import MetaRow from '../components/MetaRow';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, radius, depth, rgba, ThemeColors } from '../theme';
 import CapacityBar from '../components/CapacityBar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 
 export default function EventDetailsScreen({ route, navigation }: any) {
+  const { colors } = useTheme();
   const { id } = route.params;
   const { user } = useAuth();
   const [event, setEvent] = useState<any>(null);
   const [reserving, setReserving] = useState(false);
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => { setEvent(await api.getEvent(id)); }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -42,7 +44,6 @@ export default function EventDetailsScreen({ route, navigation }: any) {
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.wrap}>
-      {/* Hero */}
       <View style={[s.hero, { backgroundColor: heroAccent }]}>
         <View style={s.heroOverlay} />
         <View style={s.heroContent}>
@@ -67,20 +68,17 @@ export default function EventDetailsScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      {/* Информационна карта */}
       <View style={s.infoCard}>
         <View style={s.gridRow}>
           <InfoChip
             label="Дата"
             value={eventDate.toLocaleDateString('bg-BG', { day: 'numeric', month: 'long' })}
-            icon="calendar"
-            color={colors.primary}
+            icon="calendar" color={colors.primary}
           />
           <InfoChip
             label="Час"
             value={eventDate.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
-            icon="time"
-            color={colors.info}
+            icon="time" color={colors.info}
           />
         </View>
 
@@ -100,7 +98,6 @@ export default function EventDetailsScreen({ route, navigation }: any) {
         <CapacityBar available={event.available_seats} capacity={event.capacity} />
       </View>
 
-      {/* Описание */}
       {event.description ? (
         <View style={s.section}>
           <Text style={s.sectionTitle}>За събитието</Text>
@@ -110,7 +107,6 @@ export default function EventDetailsScreen({ route, navigation }: any) {
         </View>
       ) : null}
 
-      {/* Действия */}
       <View style={s.actions}>
         {user?.role === 'user' && !isFull && !cancelled && (
           <Button label="Резервирай място" onPress={reserve} loading={reserving} size="lg" icon="ticket" />
@@ -131,6 +127,8 @@ export default function EventDetailsScreen({ route, navigation }: any) {
 
 function InfoChip({ label, value, icon, color }:
   { label: string; value: string; icon: any; color: string }) {
+  const { colors } = useTheme();
+  const s = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={s.infoChip}>
       <View style={[s.iconChip, { backgroundColor: rgba(color, 0.12) }]}>
@@ -142,79 +140,81 @@ function InfoChip({ label, value, icon, color }:
   );
 }
 
-const s = StyleSheet.create({
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  wrap:    { paddingBottom: spacing.xxl },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+    wrap:    { paddingBottom: spacing.xxl },
 
-  hero: {
-    margin: spacing.md,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    ...depth.level3,
-  },
-  heroOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.12)',
-  },
-  heroContent: {
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  heroDateBlock: {
-    width: 72,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
-    alignItems: 'center',
-    marginRight: spacing.lg,
-  },
-  heroMonth: { fontSize: 11, fontWeight: font.bold, color: '#FFFFFF', letterSpacing: 1, opacity: 0.85 },
-  heroDay:   { fontSize: 30, fontWeight: font.bold, color: '#FFFFFF', lineHeight: 32, marginTop: 2 },
-  heroYear:  { fontSize: 11, fontWeight: font.medium, color: '#FFFFFF', opacity: 0.75, marginTop: 2 },
-  heroText:  { flex: 1 },
-  heroBadgeRow: { marginBottom: spacing.sm },
-  heroTitle:    { fontSize: font.size.xl, fontWeight: font.bold, color: '#FFFFFF', lineHeight: 26 },
-  heroOrganizer:{ fontSize: font.size.sm, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
+    hero: {
+      margin: spacing.md,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      ...depth.level3,
+    },
+    heroOverlay: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.12)',
+    },
+    heroContent: {
+      padding: spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    heroDateBlock: {
+      width: 72,
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      borderRadius: radius.md,
+      paddingVertical: spacing.sm + 2,
+      alignItems: 'center',
+      marginRight: spacing.lg,
+    },
+    heroMonth: { fontSize: 11, fontWeight: font.bold, color: '#FFFFFF', letterSpacing: 1, opacity: 0.85 },
+    heroDay:   { fontSize: 30, fontWeight: font.bold, color: '#FFFFFF', lineHeight: 32, marginTop: 2 },
+    heroYear:  { fontSize: 11, fontWeight: font.medium, color: '#FFFFFF', opacity: 0.75, marginTop: 2 },
+    heroText:  { flex: 1 },
+    heroBadgeRow: { marginBottom: spacing.sm },
+    heroTitle:    { fontSize: font.size.xl, fontWeight: font.bold, color: '#FFFFFF', lineHeight: 26 },
+    heroOrganizer:{ fontSize: font.size.sm, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
 
-  infoCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    marginHorizontal: spacing.md,
-    padding: spacing.md,
-    borderWidth: 1, borderColor: colors.borderLight,
-    ...depth.level1,
-  },
-  gridRow:  { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
-  infoChip: {
-    flex: 1, padding: spacing.md,
-    borderRadius: radius.md, backgroundColor: colors.surfaceAlt,
-  },
-  iconChip: {
-    width: 32, height: 32, borderRadius: radius.sm,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  locationRow: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: spacing.md, backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md, marginBottom: spacing.sm,
-    gap: spacing.md,
-  },
-  metaLabel: { fontSize: font.size.xs, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  metaValue: { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
+    infoCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      marginHorizontal: spacing.md,
+      padding: spacing.md,
+      borderWidth: 1, borderColor: colors.borderLight,
+      ...depth.level1,
+    },
+    gridRow:  { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+    infoChip: {
+      flex: 1, padding: spacing.md,
+      borderRadius: radius.md, backgroundColor: colors.surfaceAlt,
+    },
+    iconChip: {
+      width: 32, height: 32, borderRadius: radius.sm,
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: spacing.sm,
+    },
+    locationRow: {
+      flexDirection: 'row', alignItems: 'center',
+      padding: spacing.md, backgroundColor: colors.surfaceAlt,
+      borderRadius: radius.md, marginBottom: spacing.sm,
+      gap: spacing.md,
+    },
+    metaLabel: { fontSize: font.size.xs, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+    metaValue: { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
 
-  divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md },
+    divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md },
 
-  section:      { paddingHorizontal: spacing.md, marginTop: spacing.lg },
-  sectionTitle: { fontSize: font.size.xs, fontWeight: font.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.sm },
-  descCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1, borderColor: colors.borderLight,
-  },
-  desc: { fontSize: font.size.md, lineHeight: font.size.md * font.leading.loose, color: colors.textSecondary },
+    section:      { paddingHorizontal: spacing.md, marginTop: spacing.lg },
+    sectionTitle: { fontSize: font.size.xs, fontWeight: font.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.sm },
+    descCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      borderWidth: 1, borderColor: colors.borderLight,
+    },
+    desc: { fontSize: font.size.md, lineHeight: font.size.md * font.leading.loose, color: colors.textSecondary },
 
-  actions: { paddingHorizontal: spacing.md, marginTop: spacing.lg, gap: spacing.md },
-});
+    actions: { paddingHorizontal: spacing.md, marginTop: spacing.lg, gap: spacing.md },
+  });
+}

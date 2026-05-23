@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
-import { colors, spacing, font, radius, depth } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, font, radius, depth, ThemeColors } from '../theme';
 import Card from '../components/Card';
 import MetaRow from '../components/MetaRow';
 import DateBadge from '../components/DateBadge';
@@ -19,8 +20,10 @@ LocaleConfig.locales['bg'] = {
 LocaleConfig.defaultLocale = 'bg';
 
 export default function CalendarScreen({ navigation }: any) {
-  const [events, setEvents]   = useState<any[]>([]);
+  const { colors } = useTheme();
+  const [events, setEvents]     = useState<any[]>([]);
   const [selected, setSelected] = useState<string>('');
+  const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => { setEvents(await api.listEvents()); }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -110,25 +113,27 @@ export default function CalendarScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: colors.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: colors.background },
 
-  calendarCard: {
-    margin: spacing.md,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1, borderColor: colors.borderLight,
-    ...depth.level1,
-  },
-  calendar: { paddingBottom: spacing.sm },
+    calendarCard: {
+      margin: spacing.md,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      borderWidth: 1, borderColor: colors.borderLight,
+      ...depth.level1,
+    },
+    calendar: { paddingBottom: spacing.sm },
 
-  list:     { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
-  dayLabel: { fontSize: font.size.xs, fontWeight: font.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.sm },
+    list:     { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
+    dayLabel: { fontSize: font.size.xs, fontWeight: font.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.sm },
 
-  row:       { flexDirection: 'row', alignItems: 'flex-start' },
-  body:      { flex: 1, marginLeft: spacing.md },
-  cardTitle: { fontSize: font.size.md, fontWeight: font.bold, color: colors.text, marginBottom: spacing.xs + 2 },
+    row:       { flexDirection: 'row', alignItems: 'flex-start' },
+    body:      { flex: 1, marginLeft: spacing.md },
+    cardTitle: { fontSize: font.size.md, fontWeight: font.bold, color: colors.text, marginBottom: spacing.xs + 2 },
 
-  empty:     { alignItems: 'center', paddingTop: spacing.xxl, opacity: 0.85 },
-  emptyText: { color: colors.textMuted, fontSize: font.size.md, marginTop: spacing.sm + 2 },
-});
+    empty:     { alignItems: 'center', paddingTop: spacing.xxl, opacity: 0.85 },
+    emptyText: { color: colors.textMuted, fontSize: font.size.md, marginTop: spacing.sm + 2 },
+  });
+}

@@ -1,4 +1,4 @@
-# Diploma Frontend
+# Gatherly
 
 Мобилна апликация (React Native + Expo) за управление на резервации и събития.
 
@@ -26,7 +26,7 @@ npm start
 export const API_URL = 'http://192.168.0.100:4000/api';
 ```
 
-Бекендът трябва да е стартиран на същата мрежа (виж `diploma-backend/README.md`).
+Бекендът трябва да е стартиран на същата мрежа (виж `gatherly-backend/README.md`).
 
 ## Демо акаунти
 
