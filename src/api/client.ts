@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Промени на адреса на твоя компютър в локалната мрежа (напр. 192.168.1.10)
-// или остави localhost, ако ползваш уеб.
-export const API_URL = 'http://192.168.0.146:4000/api';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL;
+if (!API_URL) {
+  throw new Error('EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and fill it in.');
+}
 
 const TOKEN_KEY = 'diploma_token';
 
