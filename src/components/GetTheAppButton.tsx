@@ -1,22 +1,69 @@
-import React from 'react';
-import { Platform, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Platform, TouchableOpacity, StyleSheet, View, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { spacing, font, radius, depth } from '../theme';
+import { spacing, radius, depth } from '../theme';
 
-const BASE_URL = (process.env.EXPO_BASE_URL ?? '').replace(/\/$/, '');
-const APK_URL = `${BASE_URL}/gatherly.apk`;
-const APK_FILENAME = 'gatherly.apk';
+const RELEASE_BASE = 'https://github.com/mivebe/gatherly-frontend/releases/latest';
+const APK_URL = `${RELEASE_BASE}/download/gatherly.apk`;
+const IPA_URL = `${RELEASE_BASE}/download/gatherly.ipa`;
+const SIZE = 44;
+
+type DownloadTarget = { url: string; filename?: string; openInNewTab: boolean };
+
+function resolveDownloadTarget(): DownloadTarget {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+  if (/android/i.test(ua)) {
+    return { url: APK_URL, filename: 'gatherly.apk', openInNewTab: false };
+  }
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (ua.includes('Mac') && typeof document !== 'undefined' && 'ontouchend' in document);
+  if (isIOS) {
+    return { url: IPA_URL, filename: 'gatherly.ipa', openInNewTab: false };
+  }
+  return { url: RELEASE_BASE, openInNewTab: true };
+}
 
 export default function GetTheAppButton() {
   const { colors } = useTheme();
+  const { user } = useAuth();
+  const scale = useRef(new Animated.Value(1)).current;
 
-  if (Platform.OS !== 'web') return null;
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !user) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 1.12,
+          duration: 800,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [scale, user]);
+
+  if (Platform.OS !== 'web' || !user) return null;
 
   const handlePress = () => {
+    const { url, filename, openInNewTab } = resolveDownloadTarget();
+    if (openInNewTab) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const a = document.createElement('a');
-    a.href = APK_URL;
-    a.download = APK_FILENAME;
+    a.href = url;
+    if (filename) a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -24,18 +71,20 @@ export default function GetTheAppButton() {
 
   return (
     <View pointerEvents="box-none" style={styles.anchor}>
-      <TouchableOpacity
-        onPress={handlePress}
-        activeOpacity={0.85}
-        style={[
-          styles.btn,
-          { backgroundColor: colors.secondary },
-          depth.level2,
-        ]}
-      >
-        <Ionicons name="download-outline" size={18} color="#FFFFFF" style={{ marginRight: spacing.sm - 2 }} />
-        <Text style={styles.label}>Свали приложението</Text>
-      </TouchableOpacity>
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <TouchableOpacity
+          onPress={handlePress}
+          activeOpacity={0.85}
+          accessibilityLabel="Свали приложението"
+          style={[
+            styles.btn,
+            { backgroundColor: colors.secondary },
+            depth.level2,
+          ]}
+        >
+          <Ionicons name="download-outline" size={22} color="#FFFFFF" />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -43,21 +92,15 @@ export default function GetTheAppButton() {
 const styles = StyleSheet.create({
   anchor: {
     position: ('fixed' as any),
-    top: spacing.md,
+    top: spacing.sm,
     right: spacing.md,
     zIndex: 9999,
   },
   btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    width: SIZE,
+    height: SIZE,
     borderRadius: radius.full,
-  },
-  label: {
-    color: '#FFFFFF',
-    fontWeight: font.semibold,
-    fontSize: font.size.sm,
-    letterSpacing: 0.2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

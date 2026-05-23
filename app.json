@@ -12,7 +12,11 @@
       "backgroundColor": "#1F3864"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mivebe.gatherly",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.mivebe.gatherly",
