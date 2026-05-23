@@ -7,3 +7,12 @@ web-build/
 .env
 .env.local
 
+# EAS / Android build
+android/
+ios/
+*.keystore
+*.jks
+credentials.json
+.keystore-password.txt
+*.apk
+*.aab

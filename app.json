@@ -15,6 +15,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.mivebe.gatherly",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1F3864"
@@ -26,6 +27,15 @@
     "plugins": [
       "expo-status-bar",
       "expo-font"
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/diploma-frontend"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c12e0bde-b93a-437f-a363-c0f7e631c57f"
+      }
+    },
+    "owner": "mivebe"
   }
 }

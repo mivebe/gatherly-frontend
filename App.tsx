@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import RootNavigator from './src/navigation';
+import GetTheAppButton from './src/components/GetTheAppButton';
 
 function ThemedStatusBar() {
   const { isDark } = useTheme();
@@ -18,6 +19,7 @@ export default function App() {
         <ThemeProvider>
           <AuthProvider>
             <RootNavigator />
+            <GetTheAppButton />
             <ThemedStatusBar />
           </AuthProvider>
         </ThemeProvider>
