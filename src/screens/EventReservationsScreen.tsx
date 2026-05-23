@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
-import { colors, spacing, font, radius, shadow } from '../theme';
+import { colors, spacing, font, radius, depth } from '../theme';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
+import Avatar from '../components/Avatar';
 
 export default function EventReservationsScreen({ route }: any) {
-  const { id, title } = route.params;
+  const { id } = route.params;
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +18,7 @@ export default function EventReservationsScreen({ route }: any) {
   }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const confirmed = rows.filter(r => r.status === 'confirmed');
+  const confirmed  = rows.filter(r => r.status === 'confirmed');
   const totalSeats = confirmed.reduce((a, r) => a + r.seats, 0);
 
   return (
@@ -32,12 +32,12 @@ export default function EventReservationsScreen({ route }: any) {
         <View style={s.summary}>
           <View style={s.statBox}>
             <Text style={s.statNum}>{confirmed.length}</Text>
-            <Text style={s.statLabel}>резервации</Text>
+            <Text style={s.statLabel}>Резервации</Text>
           </View>
           <View style={s.statDivider} />
           <View style={s.statBox}>
-            <Text style={s.statNum}>{totalSeats}</Text>
-            <Text style={s.statLabel}>заети места</Text>
+            <Text style={[s.statNum, { color: colors.secondary }]}>{totalSeats}</Text>
+            <Text style={s.statLabel}>Заети места</Text>
           </View>
         </View>
       }
@@ -46,25 +46,22 @@ export default function EventReservationsScreen({ route }: any) {
         const cancelled = item.status === 'cancelled';
         return (
           <View style={[s.row, cancelled && { opacity: 0.5 }]}>
-            {/* Аватар */}
-            <View style={[s.avatar, cancelled && { backgroundColor: colors.borderLight }]}>
-              <Ionicons name="person" size={18}
-                color={cancelled ? colors.textMuted : colors.primary} />
-            </View>
-
-            {/* Информация */}
+            <Avatar
+              name={item.full_name}
+              size="md"
+              color={cancelled ? colors.textMuted : colors.primary}
+            />
             <View style={s.info}>
-              <Text style={s.name}>{item.full_name}</Text>
-              <Text style={s.email}>{item.email}</Text>
+              <Text style={s.name} numberOfLines={1}>{item.full_name}</Text>
+              <Text style={s.email} numberOfLines={1}>{item.email}</Text>
               <Text style={s.dateMeta}>
                 {item.seats} {item.seats === 1 ? 'място' : 'места'} · {new Date(item.created_at).toLocaleDateString('bg-BG')}
               </Text>
             </View>
-
-            {/* Статус */}
             <Badge
               label={cancelled ? 'Отказана' : 'Потвърдена'}
               variant={cancelled ? 'muted' : 'success'}
+              icon={cancelled ? 'close-circle' : 'checkmark-circle'}
             />
           </View>
         );
@@ -74,31 +71,33 @@ export default function EventReservationsScreen({ route }: any) {
 }
 
 const s = StyleSheet.create({
-  list: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  // Обобщителна секция
+  list: { padding: spacing.md, paddingBottom: spacing.xxl },
+
   summary: {
-    flexDirection: 'row', backgroundColor: colors.surface,
-    borderRadius: radius.md, padding: spacing.lg,
-    marginBottom: spacing.lg, ...shadow.md,
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1, borderColor: colors.borderLight,
+    ...depth.level1,
     alignItems: 'center', justifyContent: 'center',
   },
-  statBox: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.primary },
-  statLabel: { fontSize: font.size.xs, color: colors.textMuted, marginTop: spacing.xs },
-  statDivider: { width: 1, height: 36, backgroundColor: colors.border },
-  // Ред за резервация
+  statBox:     { flex: 1, alignItems: 'center' },
+  statNum:     { fontSize: 32, fontWeight: font.bold, color: colors.primary, lineHeight: 36 },
+  statLabel:   { fontSize: font.size.xs, color: colors.textMuted, marginTop: spacing.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statDivider: { width: 1, height: 40, backgroundColor: colors.borderLight },
+
   row: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.md,
-    padding: spacing.md, marginBottom: spacing.sm, ...shadow.md,
+    backgroundColor: colors.surface, borderRadius: radius.lg,
+    padding: spacing.md, marginBottom: spacing.sm,
+    borderWidth: 1, borderColor: colors.borderLight,
+    ...depth.level0,
+    gap: spacing.md,
   },
-  avatar: {
-    width: 40, height: 40, borderRadius: radius.full,
-    backgroundColor: colors.primaryFaded,
-    alignItems: 'center', justifyContent: 'center', marginRight: spacing.md,
-  },
-  info: { flex: 1 },
-  name: { fontSize: font.size.md, fontWeight: font.semibold, color: colors.textPrimary },
-  email: { fontSize: font.size.xs, color: colors.textMuted, marginTop: 1 },
+  info:     { flex: 1, minWidth: 0 },
+  name:     { fontSize: font.size.md, fontWeight: font.semibold, color: colors.text },
+  email:    { fontSize: font.size.xs, color: colors.textMuted, marginTop: 1 },
   dateMeta: { fontSize: font.size.xs, color: colors.textSecondary, marginTop: spacing.xs },
 });

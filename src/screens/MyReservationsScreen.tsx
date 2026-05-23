@@ -8,6 +8,7 @@ import Badge from '../components/Badge';
 import MetaRow from '../components/MetaRow';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
+import DateBadge from '../components/DateBadge';
 
 export default function MyReservationsScreen() {
   const [rows, setRows] = useState<any[]>([]);
@@ -24,9 +25,11 @@ export default function MyReservationsScreen() {
       { text: 'Не' },
       { text: 'Да, откажи', style: 'destructive', onPress: async () => {
           await api.cancelReservation(id); load();
-      }}
+      }},
     ]);
   };
+
+  const confirmed = rows.filter(r => r.status !== 'cancelled');
 
   return (
     <FlatList
@@ -35,21 +38,51 @@ export default function MyReservationsScreen() {
       data={rows}
       keyExtractor={(r) => String(r.id)}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
+      ListHeaderComponent={
+        rows.length ? (
+          <View style={s.header}>
+            <Text style={s.headerTitle}>Моите резервации</Text>
+            <Text style={s.headerSub}>{confirmed.length} активни, {rows.length - confirmed.length} отказани</Text>
+          </View>
+        ) : null
+      }
       ListEmptyComponent={<EmptyState icon="bookmark-outline" message="Все още нямате резервации." />}
       renderItem={({ item }) => {
         const cancelled = item.status === 'cancelled';
+        const start     = new Date(item.start_at);
+        const accent    = cancelled ? colors.textMuted : colors.primary;
+
         return (
-          <Card disabled={cancelled}>
-            <View style={s.header}>
-              <Text style={s.title}>{item.title}</Text>
-              <Badge label={cancelled ? 'Отказана' : 'Потвърдена'} variant={cancelled ? 'muted' : 'success'} />
+          <Card disabled={cancelled} accentColor={accent} level={cancelled ? 0 : 1}>
+            <View style={s.row}>
+              <DateBadge date={start} color={accent} />
+              <View style={s.body}>
+                <View style={s.titleRow}>
+                  <Text style={s.title} numberOfLines={2}>{item.title}</Text>
+                  <Badge
+                    label={cancelled ? 'Отказана' : 'Потвърдена'}
+                    variant={cancelled ? 'muted' : 'success'}
+                    icon={cancelled ? 'close-circle' : 'checkmark-circle'}
+                  />
+                </View>
+                <MetaRow
+                  icon="time-outline"
+                  text={start.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
+                  dense
+                />
+                {item.location ? <MetaRow icon="location-outline" text={item.location} dense /> : null}
+                <MetaRow icon="people-outline" text={`${item.seats} ${item.seats === 1 ? 'място' : 'места'}`} dense />
+              </View>
             </View>
-            <MetaRow icon="calendar-outline" text={new Date(item.start_at).toLocaleString('bg-BG')} />
-            {item.location ? <MetaRow icon="location-outline" text={item.location} /> : null}
-            <MetaRow icon="people-outline" text={`${item.seats} ${item.seats === 1 ? 'място' : 'места'}`} />
+
             {!cancelled && (
-              <Button label="Откажи резервация" variant="danger" onPress={() => cancel(item.id)}
-                style={{ marginTop: spacing.md }} />
+              <Button
+                label="Откажи резервация"
+                variant="outline"
+                onPress={() => cancel(item.id)}
+                size="sm"
+                style={{ marginTop: spacing.sm + 4, alignSelf: 'flex-start' }}
+              />
             )}
           </Card>
         );
@@ -59,7 +92,13 @@ export default function MyReservationsScreen() {
 }
 
 const s = StyleSheet.create({
-  list: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm },
-  title: { fontSize: font.size.lg, fontWeight: font.bold, color: colors.textPrimary, flex: 1, marginRight: spacing.sm },
+  list:   { padding: spacing.md, paddingBottom: spacing.xxl },
+  header: { marginTop: spacing.sm, marginBottom: spacing.md },
+  headerTitle: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.text },
+  headerSub:   { fontSize: font.size.sm,  color: colors.textMuted, marginTop: 2 },
+
+  row:      { flexDirection: 'row', alignItems: 'flex-start' },
+  body:     { flex: 1, marginLeft: spacing.md },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.xs + 2, gap: spacing.sm },
+  title:    { fontSize: font.size.lg, fontWeight: font.bold, color: colors.text, flex: 1, lineHeight: 22 },
 });

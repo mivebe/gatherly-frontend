@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../context/AuthContext';
 import { colors, font, nav, shadow } from '../theme';
@@ -29,31 +30,35 @@ const TabIcon =
   ({ focused, color, size }: { focused: boolean; color: string; size: number }) =>
     <Ionicons name={name} size={size ?? 22} color={color} style={{ opacity: focused ? 1 : 0.6 }} />;
 
-const tabScreenOptions = {
-  tabBarActiveTintColor: nav.tabActiveTint,
-  tabBarInactiveTintColor: colors.textMuted,
-  tabBarLabelPosition: 'below-icon' as const,
-  tabBarLabelStyle: {
-    fontSize: font.size.xs,
-    fontWeight: font.medium,
-    textAlign: 'center' as const,
-    includeFontPadding: false,
-  },
-  tabBarItemStyle: { paddingHorizontal: 2, paddingVertical: 4 },
-  tabBarStyle: {
-    height: nav.tabBarHeight,
-    paddingTop: 6,
-    paddingBottom: 8,
-    backgroundColor: colors.surface,
-    borderTopColor: colors.borderLight,
-    ...shadow.sm,
-  },
-  tabBarAllowFontScaling: false,
-  headerStyle: { backgroundColor: nav.headerBg, ...shadow.sm },
-  headerTintColor: nav.headerTint,
-  headerTitleStyle: { fontWeight: font.semibold as any, fontSize: font.size.lg },
-  headerShadowVisible: false,
-};
+function useTabScreenOptions() {
+  const insets = useSafeAreaInsets();
+  const basePaddingBottom = 8;
+  return {
+    tabBarActiveTintColor: nav.tabActiveTint,
+    tabBarInactiveTintColor: colors.textMuted,
+    tabBarLabelPosition: 'below-icon' as const,
+    tabBarLabelStyle: {
+      fontSize: font.size.xs,
+      fontWeight: font.medium,
+      textAlign: 'center' as const,
+      includeFontPadding: false,
+    },
+    tabBarItemStyle: { paddingHorizontal: 2, paddingVertical: 4 },
+    tabBarStyle: {
+      height: nav.tabBarHeight + insets.bottom,
+      paddingTop: 6,
+      paddingBottom: basePaddingBottom + insets.bottom,
+      backgroundColor: colors.surface,
+      borderTopColor: colors.borderLight,
+      ...shadow.sm,
+    },
+    tabBarAllowFontScaling: false,
+    headerStyle: { backgroundColor: nav.headerBg, ...shadow.sm },
+    headerTintColor: nav.headerTint,
+    headerTitleStyle: { fontWeight: font.semibold as any, fontSize: font.size.lg },
+    headerShadowVisible: false,
+  };
+}
 
 const stackHeaderOptions = {
   headerStyle: { backgroundColor: nav.headerBg },
@@ -64,6 +69,7 @@ const stackHeaderOptions = {
 };
 
 function UserTabs() {
+  const tabScreenOptions = useTabScreenOptions();
   return (
     <Tabs.Navigator screenOptions={tabScreenOptions}>
       <Tabs.Screen name="Събития" component={EventsListScreen}
@@ -79,6 +85,7 @@ function UserTabs() {
 }
 
 function OrganizerTabs() {
+  const tabScreenOptions = useTabScreenOptions();
   return (
     <Tabs.Navigator screenOptions={tabScreenOptions}>
       <Tabs.Screen name="Събития" component={EventsListScreen}

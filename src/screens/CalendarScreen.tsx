@@ -1,13 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
-import { colors, spacing, font, radius, shadow } from '../theme';
+import { colors, spacing, font, radius, depth } from '../theme';
 import Card from '../components/Card';
 import MetaRow from '../components/MetaRow';
+import DateBadge from '../components/DateBadge';
 
-// Кратка българска локализация за календара
 LocaleConfig.locales['bg'] = {
   monthNames: ['Януари','Февруари','Март','Април','Май','Юни','Юли','Август','Септември','Октомври','Ноември','Декември'],
   monthNamesShort: ['Яну','Фев','Мар','Апр','Май','Юни','Юли','Авг','Сеп','Окт','Ное','Дек'],
@@ -18,15 +19,12 @@ LocaleConfig.locales['bg'] = {
 LocaleConfig.defaultLocale = 'bg';
 
 export default function CalendarScreen({ navigation }: any) {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents]   = useState<any[]>([]);
   const [selected, setSelected] = useState<string>('');
 
-  const load = useCallback(async () => {
-    setEvents(await api.listEvents());
-  }, []);
+  const load = useCallback(async () => { setEvents(await api.listEvents()); }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  // Подготовка на маркираните дати
   const marked: any = {};
   events.forEach(e => {
     const day = new Date(e.start_at).toISOString().slice(0, 10);
@@ -38,7 +36,7 @@ export default function CalendarScreen({ navigation }: any) {
       ...(marked[selected] || {}),
       selected: true,
       selectedColor: colors.primary,
-      selectedTextColor: '#fff',
+      selectedTextColor: colors.textOnPrimary,
     };
   }
 
@@ -46,29 +44,31 @@ export default function CalendarScreen({ navigation }: any) {
 
   return (
     <View style={s.wrap}>
-      <Calendar
-        markedDates={marked}
-        markingType="multi-dot"
-        onDayPress={(d: any) => setSelected(d.dateString)}
-        theme={{
-          calendarBackground: colors.surface,
-          todayTextColor: colors.primary,
-          todayBackgroundColor: colors.primaryFaded,
-          arrowColor: colors.primary,
-          dotColor: colors.primary,
-          selectedDayBackgroundColor: colors.primary,
-          textDayFontSize: font.size.sm,
-          textMonthFontSize: font.size.lg,
-          textMonthFontWeight: font.bold,
-          textDayHeaderFontSize: font.size.xs,
-          textDayHeaderFontWeight: font.semibold,
-          textSectionTitleColor: colors.textMuted,
-          dayTextColor: colors.textPrimary,
-          textDisabledColor: colors.textMuted,
-          monthTextColor: colors.textPrimary,
-        }}
-        style={s.calendar}
-      />
+      <View style={s.calendarCard}>
+        <Calendar
+          markedDates={marked}
+          markingType="multi-dot"
+          onDayPress={(d: any) => setSelected(d.dateString)}
+          theme={{
+            calendarBackground:   colors.surface,
+            todayTextColor:       colors.primary,
+            todayBackgroundColor: colors.primaryFaded,
+            arrowColor:           colors.primary,
+            dotColor:             colors.primary,
+            selectedDayBackgroundColor: colors.primary,
+            textDayFontSize:        font.size.sm,
+            textMonthFontSize:      font.size.lg,
+            textMonthFontWeight:    font.bold as any,
+            textDayHeaderFontSize:  font.size.xs,
+            textDayHeaderFontWeight:font.bold as any,
+            textSectionTitleColor:  colors.textMuted,
+            dayTextColor:           colors.text,
+            textDisabledColor:      colors.textMuted,
+            monthTextColor:         colors.text,
+          }}
+          style={s.calendar}
+        />
+      </View>
 
       <ScrollView contentContainerStyle={s.list}>
         {selected ? (
@@ -77,21 +77,31 @@ export default function CalendarScreen({ navigation }: any) {
               <Text style={s.dayLabel}>
                 {new Date(selected + 'T00:00').toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' })}
               </Text>
-              {dayEvents.map(e => (
-                <Card key={e.id} onPress={() => navigation.navigate('EventDetails', { id: e.id })}>
-                  <Text style={s.cardTitle}>{e.title}</Text>
-                  <MetaRow icon="time-outline" text={new Date(e.start_at).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })} />
-                  {e.location ? <MetaRow icon="location-outline" text={e.location} /> : null}
-                </Card>
-              ))}
+              {dayEvents.map(e => {
+                const d = new Date(e.start_at);
+                return (
+                  <Card key={e.id} onPress={() => navigation.navigate('EventDetails', { id: e.id })} accentColor={colors.primary} level={1}>
+                    <View style={s.row}>
+                      <DateBadge date={d} color={colors.primary} />
+                      <View style={s.body}>
+                        <Text style={s.cardTitle} numberOfLines={2}>{e.title}</Text>
+                        <MetaRow icon="time-outline" text={d.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })} dense />
+                        {e.location ? <MetaRow icon="location-outline" text={e.location} dense /> : null}
+                      </View>
+                    </View>
+                  </Card>
+                );
+              })}
             </>
           ) : (
-            <View style={s.emptyWrap}>
+            <View style={s.empty}>
+              <Ionicons name="calendar-clear-outline" size={42} color={colors.textMuted} />
               <Text style={s.emptyText}>Няма събития на тази дата.</Text>
             </View>
           )
         ) : (
-          <View style={s.emptyWrap}>
+          <View style={s.empty}>
+            <Ionicons name="calendar-outline" size={42} color={colors.textMuted} />
             <Text style={s.emptyText}>Изберете дата от календара.</Text>
           </View>
         )}
@@ -102,10 +112,23 @@ export default function CalendarScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.background },
-  calendar: { ...shadow.sm, marginBottom: spacing.xs },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  dayLabel: { fontSize: font.size.xs, fontWeight: font.semibold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.md },
-  cardTitle: { fontSize: font.size.md, fontWeight: font.bold, color: colors.textPrimary, marginBottom: spacing.xs },
-  emptyWrap: { alignItems: 'center', paddingTop: spacing.xxl },
-  emptyText: { color: colors.textMuted, fontSize: font.size.md },
+
+  calendarCard: {
+    margin: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1, borderColor: colors.borderLight,
+    ...depth.level1,
+  },
+  calendar: { paddingBottom: spacing.sm },
+
+  list:     { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
+  dayLabel: { fontSize: font.size.xs, fontWeight: font.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.sm },
+
+  row:       { flexDirection: 'row', alignItems: 'flex-start' },
+  body:      { flex: 1, marginLeft: spacing.md },
+  cardTitle: { fontSize: font.size.md, fontWeight: font.bold, color: colors.text, marginBottom: spacing.xs + 2 },
+
+  empty:     { alignItems: 'center', paddingTop: spacing.xxl, opacity: 0.85 },
+  emptyText: { color: colors.textMuted, fontSize: font.size.md, marginTop: spacing.sm + 2 },
 });

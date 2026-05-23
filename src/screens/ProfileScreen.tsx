@@ -1,91 +1,129 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, font, radius, shadow } from '../theme';
+import { colors, spacing, font, radius, depth, rgba } from '../theme';
 import Button from '../components/Button';
-
-const logo = require('../../assets/logo.png');
+import Avatar from '../components/Avatar';
+import Badge from '../components/Badge';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   if (!user) return null;
 
-  const initials = user.full_name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const isOrganizer = user.role === 'organizer';
 
   return (
-    <View style={s.wrap}>
-      {/* Аватар */}
-      <View style={s.avatarCircle}>
-        <Text style={s.initials}>{initials}</Text>
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.wrap}>
+      {/* Hero блок */}
+      <View style={s.hero}>
+        <View style={s.heroBg} />
+        <View style={s.heroContent}>
+          <Avatar name={user.full_name} size="xl" color={colors.primary} />
+          <Text style={s.name}>{user.full_name}</Text>
+          <Text style={s.email}>{user.email}</Text>
+          <View style={{ marginTop: spacing.sm + 2 }}>
+            <Badge
+              label={isOrganizer ? 'Организатор' : 'Потребител'}
+              variant={isOrganizer ? 'secondary' : 'primary'}
+              icon={isOrganizer ? 'briefcase' : 'person'}
+            />
+          </View>
+        </View>
       </View>
 
-      <Text style={s.name}>{user.full_name}</Text>
-
-      <View style={s.roleBadge}>
-        <Ionicons name={user.role === 'organizer' ? 'briefcase' : 'person'} size={13} color={colors.primary} />
-        <Text style={s.roleText}>{user.role === 'organizer' ? 'Организатор' : 'Потребител'}</Text>
-      </View>
-
-      {/* Info карта */}
-      <View style={s.infoCard}>
-        <InfoRow icon="mail-outline" label="Имейл" value={user.email} />
+      {/* Информация */}
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Данни за акаунта</Text>
+        <InfoRow icon="mail-outline"      label="Имейл" value={user.email} />
         <View style={s.divider} />
-        <InfoRow icon="shield-checkmark-outline" label="Роля" value={user.role === 'organizer' ? 'Организатор' : 'Потребител'} />
+        <InfoRow icon="shield-checkmark-outline" label="Роля" value={isOrganizer ? 'Организатор' : 'Потребител'} />
+        <View style={s.divider} />
+        <InfoRow icon="finger-print-outline" label="Идентификатор" value={`#${user.id}`} />
       </View>
 
-      <Button label="Изход от акаунта" variant="danger" onPress={logout} style={{ marginTop: spacing.xxl, width: '100%' }} />
-
-      {/* Бранд */}
-      <View style={s.brandWrap}>
-        <Image source={logo} style={s.brandLogo} />
-        <Text style={s.brandText}>EventBook v1.0</Text>
+      {/* Бранд карта */}
+      <View style={[s.card, s.brandCard]}>
+        <View style={s.brandRow}>
+          <View style={s.brandLogo}>
+            <Ionicons name="ticket" size={20} color={colors.textOnPrimary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.brandTitle}>EventBook</Text>
+            <Text style={s.brandSub}>Версия 1.0 · резервации и събития</Text>
+          </View>
+        </View>
       </View>
-    </View>
+
+      <Button
+        label="Изход от акаунта"
+        variant="outline"
+        icon="log-out-outline"
+        onPress={logout}
+        size="lg"
+        style={{ marginTop: spacing.lg }}
+      />
+    </ScrollView>
   );
 }
 
 function InfoRow({ icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <View style={s.infoRow}>
-      <Ionicons name={icon} size={20} color={colors.textMuted} style={{ marginRight: spacing.md }} />
-      <View>
+      <View style={s.infoIcon}>
+        <Ionicons name={icon} size={18} color={colors.primary} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={s.infoLabel}>{label}</Text>
-        <Text style={s.infoValue}>{value}</Text>
+        <Text style={s.infoValue} numberOfLines={1}>{value}</Text>
       </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  wrap: { flex: 1, padding: spacing.xxl, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
+  wrap: { padding: spacing.md, paddingBottom: spacing.xxl },
 
-  avatarCircle: {
-    width: 88, height: 88, borderRadius: radius.full,
+  hero: {
+    borderRadius: radius.xl, overflow: 'hidden',
+    marginBottom: spacing.md, padding: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1, borderColor: colors.borderLight,
+    backgroundColor: colors.surface,
+    ...depth.level2,
+  },
+  heroBg: {
+    position: 'absolute', top: 0, left: 0, right: 0,
+    backgroundColor: rgba(colors.primary, 0.06),
+    height: 80,
+  },
+  heroContent: { alignItems: 'center', paddingTop: spacing.sm },
+  name:  { fontSize: font.size.xl, fontWeight: font.bold, color: colors.text, marginTop: spacing.md },
+  email: { fontSize: font.size.sm, color: colors.textMuted, marginTop: 2 },
+
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1, borderColor: colors.borderLight,
+    ...depth.level1,
+    marginBottom: spacing.md,
+  },
+  cardTitle: { fontSize: font.size.xs, fontWeight: font.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.md },
+
+  infoRow:  { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
+  infoIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.primaryFaded, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
+  infoLabel:{ fontSize: font.size.xs, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoValue:{ fontSize: font.size.md, color: colors.text, fontWeight: font.medium, marginTop: 1 },
+  divider:  { height: 1, backgroundColor: colors.borderLight },
+
+  brandCard: { paddingVertical: spacing.md },
+  brandRow:  { flexDirection: 'row', alignItems: 'center' },
+  brandLogo: {
+    width: 40, height: 40, borderRadius: radius.sm,
     backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
-    marginBottom: spacing.lg, ...shadow.lg,
+    marginRight: spacing.md,
   },
-  initials: { fontSize: font.size.hero, fontWeight: font.bold, color: '#fff' },
-
-  name: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.textPrimary, marginBottom: spacing.sm },
-
-  roleBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2,
-    backgroundColor: colors.primaryFaded, paddingHorizontal: spacing.md + 2, paddingVertical: spacing.xs + 3,
-    borderRadius: radius.full, marginBottom: spacing.xxl,
-  },
-  roleText: { fontSize: font.size.sm, fontWeight: font.semibold, color: colors.primary },
-
-  infoCard: {
-    backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg,
-    width: '100%', ...shadow.md,
-  },
-  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
-  infoLabel: { fontSize: font.size.xs, color: colors.textMuted },
-  infoValue: { fontSize: font.size.md, color: colors.textPrimary, fontWeight: font.medium, marginTop: 1 },
-  divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.sm },
-
-  brandWrap: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xxxl, opacity: 0.5 },
-  brandLogo: { width: 24, height: 24, marginRight: spacing.sm },
-  brandText: { fontSize: font.size.xs, color: colors.textMuted },
+  brandTitle: { fontSize: font.size.md, fontWeight: font.bold, color: colors.text },
+  brandSub:   { fontSize: font.size.xs, color: colors.textMuted, marginTop: 2 },
 });

@@ -1,38 +1,76 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, ActivityIndicator } from 'react-native';
-import { colors, radius, spacing, font } from '../theme';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, ActivityIndicator, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, radius, spacing, font, depth } from '../theme';
 
-type Variant = 'primary' | 'danger' | 'outline';
+type Variant = 'primary' | 'secondary' | 'danger' | 'outline' | 'ghost';
+type Size = 'sm' | 'md' | 'lg';
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
-export default function Button({ label, onPress, variant = 'primary', loading, style }:
-  { label: string; onPress: () => void; variant?: Variant; loading?: boolean; style?: ViewStyle }) {
-  const isPrimary = variant === 'primary';
-  const isDanger = variant === 'danger';
-  const isOutline = variant === 'outline';
+type Props = {
+  label: string;
+  onPress: () => void;
+  variant?: Variant;
+  size?: Size;
+  loading?: boolean;
+  disabled?: boolean;
+  icon?: IoniconName;
+  style?: ViewStyle;
+};
+
+const sizes: Record<Size, { padV: number; padH: number; font: number; iconSize: number }> = {
+  sm: { padV: spacing.sm,        padH: spacing.md,       font: font.size.sm, iconSize: 16 },
+  md: { padV: spacing.md - 2,    padH: spacing.lg,       font: font.size.md, iconSize: 18 },
+  lg: { padV: spacing.md + 2,    padH: spacing.xl,       font: font.size.lg, iconSize: 20 },
+};
+
+const tone = (v: Variant) => {
+  switch (v) {
+    case 'primary':   return { bg: colors.primary,    fg: colors.textOnPrimary, border: 'transparent' };
+    case 'secondary': return { bg: colors.secondary,  fg: '#FFFFFF',            border: 'transparent' };
+    case 'danger':    return { bg: colors.danger,     fg: '#FFFFFF',            border: 'transparent' };
+    case 'outline':   return { bg: 'transparent',     fg: colors.primary,       border: colors.primary };
+    case 'ghost':     return { bg: 'transparent',     fg: colors.text,          border: 'transparent' };
+  }
+};
+
+export default function Button({
+  label, onPress, variant = 'primary', size = 'md',
+  loading, disabled, icon, style,
+}: Props) {
+  const t = tone(variant);
+  const sz = sizes[size];
+  const isFlat = variant === 'outline' || variant === 'ghost';
 
   return (
     <TouchableOpacity
       style={[
         s.base,
-        isPrimary && { backgroundColor: colors.primary },
-        isDanger  && { backgroundColor: colors.danger },
-        isOutline && { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary },
-        loading && { opacity: 0.7 },
+        { paddingVertical: sz.padV, paddingHorizontal: sz.padH,
+          backgroundColor: t.bg, borderColor: t.border,
+          borderWidth: variant === 'outline' ? 1.5 : 0 },
+        !isFlat && depth.level1,
+        (loading || disabled) && { opacity: 0.55 },
         style,
       ]}
       onPress={onPress}
-      disabled={loading}
-      activeOpacity={0.8}
+      disabled={loading || disabled}
+      activeOpacity={0.85}
     >
-      {loading
-        ? <ActivityIndicator color={isOutline ? colors.primary : '#fff'} />
-        : <Text style={[s.label, isOutline && { color: colors.primary }]}>{label}</Text>
-      }
+      {loading ? (
+        <ActivityIndicator color={t.fg} />
+      ) : (
+        <View style={s.row}>
+          {icon ? <Ionicons name={icon} size={sz.iconSize} color={t.fg} style={{ marginRight: spacing.sm - 2 }} /> : null}
+          <Text style={[s.label, { color: t.fg, fontSize: sz.font }]}>{label}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
 
 const s = StyleSheet.create({
-  base: { paddingVertical: spacing.md + 2, paddingHorizontal: spacing.xl, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  label: { color: '#fff', fontWeight: font.semibold, fontSize: font.size.md },
+  base:  { borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  row:   { flexDirection: 'row', alignItems: 'center' },
+  label: { fontWeight: font.semibold, letterSpacing: 0.2 },
 });

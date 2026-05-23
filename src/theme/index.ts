@@ -2,27 +2,18 @@
  * ─────────────────────────────────────────────────────────────────────
  * ДИЗАЙН СИСТЕМА  ·  EventBook
  * ─────────────────────────────────────────────────────────────────────
- *
- * Архитектура, вдъхновена от bekar-frontend:
+ * Архитектура вдъхновена от bekar-frontend.
  *   • BRAND секция за бърза промяна на палитрата
- *   • Отделни dark/light палитри (готови за бъдещ toggle)
+ *   • Отделни light/dark палитри (готови за бъдещ toggle)
  *   • 5-степенна дълбочина на сенки (level0 – level4)
- *   • Spacing на 8px grid (xs 4, sm 8, md 16, lg 24 …)
- *   • borderRadius скала с full = 9999
- *
- * ░░░  BRAND – ПРОМЕНЯЙТЕ САМО ТУК  ░░░
- * ─────────────────────────────────────────────────────────────────────
- *   Синя  (по подразбиране):  hue '#1F3864', accent '#3B82F6'
- *   Тийл:                     hue '#00796B', accent '#26A69A'
- *   Индиго:                   hue '#283593', accent '#5C6BC0'
- *   Зелена:                   hue '#1B5E20', accent '#43A047'
- *   Кехлибар:                 hue '#5D4037', accent '#F4A623'
+ *   • 8px spacing grid, radius скала с full = 9999
  * ─────────────────────────────────────────────────────────────────────
  */
 
 const BRAND = {
-  hue:    '#1F3864',
-  accent: '#3B82F6',
+  hue:    '#0D9488', // teal-600
+  accent: '#14B8A6', // teal-500
+  warm:   '#F97316', // orange-500 (CTA / акценти)
 };
 
 // ─── Помощни ────────────────────────────────────────────────────────
@@ -45,83 +36,95 @@ export function rgba(hex: string, alpha: number): string {
 // ─── LIGHT THEME (default) ──────────────────────────────────────────
 export const lightColors = {
   primary:       BRAND.hue,
-  primaryDark:   BRAND.hue,
+  primaryDark:   '#0B7269',
   primaryLight:  BRAND.accent,
   primaryFaded:  fade(BRAND.hue, 0.90),
+  primarySoft:   fade(BRAND.hue, 0.82),
 
-  secondary:     '#F59E0B',
-  secondaryFaded:'#FEF3C7',
+  secondary:     BRAND.warm,
+  secondaryDark: '#C2410C',
+  secondaryFaded:'#FFEDD5',
 
-  background:          '#F5F6FA',
-  backgroundSecondary: '#EDEEF3',
-  backgroundTertiary:  '#E2E4EA',
+  background:          '#F7F8FA',
+  backgroundSecondary: '#EFF1F5',
+  backgroundTertiary:  '#E4E7EC',
 
   surface:       '#FFFFFF',
-  surfaceLight:  '#FAFAFC',
+  surfaceLight:  '#FAFBFC',
+  surfaceAlt:    '#F4F6F8',
 
-  text:          '#1A1D26',
-  textSecondary: '#5A6275',
-  textMuted:     '#9CA3B4',
+  text:          '#0F172A',
+  textSecondary: '#475569',
+  textMuted:     '#94A3B8',
   textOnPrimary: '#FFFFFF',
 
   success:       '#16A34A',
   successFaded:  '#DCFCE7',
-  warning:       '#D97706',
-  warningFaded:  '#FEF3C7',
+  warning:       '#EA580C',
+  warningFaded:  '#FFEDD5',
   danger:        '#DC2626',
   dangerFaded:   '#FEE2E2',
-  info:          BRAND.accent,
-  infoFaded:     fade(BRAND.accent, 0.90),
+  info:          '#0891B2',
+  infoFaded:     '#CFFAFE',
 
-  border:        '#D4D8E1',
-  borderLight:   '#EBEDF2',
+  border:        '#E2E8F0',
+  borderLight:   '#EEF1F5',
 
-  overlay:       'rgba(0,0,0,0.35)',
-  shimmer:       '#E8EAF0',
+  overlay:       'rgba(15,23,42,0.45)',
+  shimmer:       '#EBEEF2',
 };
 
 // ─── DARK THEME (готов за бъдещо превключване) ──────────────────────
 export const darkColors = {
-  primary:       '#3B82F6',
-  primaryDark:   '#2563EB',
-  primaryLight:  '#60A5FA',
-  primaryFaded:  '#1E293B',
+  primary:       BRAND.accent,
+  primaryDark:   BRAND.hue,
+  primaryLight:  '#2DD4BF',
+  primaryFaded:  '#0D2A2A',
+  primarySoft:   '#103838',
 
-  secondary:     '#F59E0B',
-  secondaryFaded:'#422006',
+  secondary:     BRAND.warm,
+  secondaryDark: '#C2410C',
+  secondaryFaded:'#3B1D08',
 
-  background:          '#0F1117',
-  backgroundSecondary: '#181B24',
-  backgroundTertiary:  '#232730',
+  background:          '#0B0F14',
+  backgroundSecondary: '#12171F',
+  backgroundTertiary:  '#1A2029',
 
-  surface:       '#1E2130',
-  surfaceLight:  '#282C3A',
+  surface:       '#161C25',
+  surfaceLight:  '#1E2530',
+  surfaceAlt:    '#1A222D',
 
-  text:          '#F1F2F6',
-  textSecondary: '#9CA3B4',
-  textMuted:     '#5A6275',
-  textOnPrimary: '#FFFFFF',
+  text:          '#F1F5F9',
+  textSecondary: '#94A3B8',
+  textMuted:     '#64748B',
+  textOnPrimary: '#0B0F14',
 
   success:       '#4ADE80',
-  successFaded:  '#14291D',
-  warning:       '#FBBF24',
-  warningFaded:  '#3B2A08',
+  successFaded:  '#0E2A1A',
+  warning:       '#FB923C',
+  warningFaded:  '#2E1B0B',
   danger:        '#F87171',
-  dangerFaded:   '#3B1414',
-  info:          '#60A5FA',
-  infoFaded:     '#1C2A4A',
+  dangerFaded:   '#311414',
+  info:          '#22D3EE',
+  infoFaded:     '#0F2A30',
 
-  border:        '#2D3344',
-  borderLight:   '#3A4055',
+  border:        '#293340',
+  borderLight:   '#1F2733',
 
-  overlay:       'rgba(0,0,0,0.55)',
-  shimmer:       '#2D3344',
+  overlay:       'rgba(0,0,0,0.6)',
+  shimmer:       '#1F2733',
 };
 
-// ─── Активна палитра ────────────────────────────────────────────────
-export const colors = lightColors;
+// ─── Активна палитра + legacy aliases ──────────────────────────────
+const active = lightColors;
+export const colors = {
+  ...active,
+  // Legacy aliases (запазват backwards compatibility)
+  textPrimary: active.text,
+  inputBg:     active.surface,
+};
 
-// ─── SPACING (8px grid, като bekar) ─────────────────────────────────
+// ─── SPACING (8px grid) ─────────────────────────────────────────────
 export const spacing = {
   xs:   4,
   sm:   8,
@@ -129,6 +132,7 @@ export const spacing = {
   lg:   24,
   xl:   32,
   xxl:  48,
+  xxxl: 64,
 };
 
 // ─── ЗАКРЪГЛЕНИЯ ─────────────────────────────────────────────────────
@@ -138,6 +142,7 @@ export const radius = {
   md:   12,
   lg:   16,
   xl:   20,
+  xxl:  28,
   full: 9999,
 };
 
@@ -147,6 +152,7 @@ export const font = {
   medium:   '500' as const,
   semibold: '600' as const,
   bold:     '700' as const,
+  heavy:    '800' as const,
 
   size: {
     xs:   11,
@@ -155,7 +161,7 @@ export const font = {
     lg:   17,
     xl:   20,
     xxl:  26,
-    hero: 32,
+    hero: 34,
   },
 
   leading: {
@@ -169,43 +175,43 @@ export const font = {
 export const depth = {
   /** Flat – минимално разделяне */
   level0: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   },
   /** Low – леко повдигнати карти */
   level1: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 2,
   },
   /** Medium – стандартни карти */
   level2: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
     elevation: 4,
   },
   /** High – плаващи елементи (FAB, модали) */
   level3: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 20,
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
     elevation: 8,
   },
   /** Highest – CTA, hero банери */
   level4: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.18,
-    shadowRadius: 28,
-    elevation: 12,
+    shadowRadius: 32,
+    elevation: 14,
   },
 };
 
@@ -222,7 +228,7 @@ export const nav = {
   headerBg:      colors.surface,
   headerTint:    colors.text,
   tabActiveTint: colors.primary,
-  tabBarHeight:  64,
+  tabBarHeight:  60,
 };
 
 // ─── АНИМАЦИЯ (timing стойности) ─────────────────────────────────────

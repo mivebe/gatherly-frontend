@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, ViewStyle } from 'react-native';
 import { colors, radius, spacing, depth } from '../theme';
 
 type Props = {
@@ -7,38 +7,55 @@ type Props = {
   onPress?: () => void;
   style?: ViewStyle;
   disabled?: boolean;
-  /** Ляв цветен акцент (bekar стил) */
+  /** Цветен ляв акцент (bekar стил). */
   accentColor?: string;
-  /** Ниво на дълбочина (0-4) */
+  /** Дълбочина на сянката (0–4). */
   level?: 0 | 1 | 2 | 3 | 4;
+  /** По-плоско padding/малки карти. */
+  compact?: boolean;
 };
 
 const levels = [depth.level0, depth.level1, depth.level2, depth.level3, depth.level4];
 
-export default function Card({ children, onPress, style, disabled, accentColor, level = 2 }: Props) {
-  return (
-    <TouchableOpacity
-      style={[
-        s.card,
-        levels[level],
-        accentColor ? { borderLeftWidth: 3, borderLeftColor: accentColor } : null,
-        style,
-        disabled && { opacity: 0.45 },
-      ]}
-      onPress={onPress}
-      disabled={!onPress}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
-      {children}
-    </TouchableOpacity>
+export default function Card({
+  children, onPress, style, disabled, accentColor, level = 2, compact,
+}: Props) {
+  const inner = (
+    <>
+      {accentColor ? <View style={[s.accent, { backgroundColor: accentColor }]} /> : null}
+      <View style={[compact ? s.contentCompact : s.content]}>{children}</View>
+    </>
   );
+
+  const wrapperStyle = [
+    s.card,
+    levels[level],
+    accentColor ? s.cardWithAccent : null,
+    style,
+    disabled && { opacity: 0.45 },
+  ];
+
+  if (onPress) {
+    return (
+      <TouchableOpacity style={wrapperStyle} onPress={onPress} activeOpacity={0.85}>
+        {inner}
+      </TouchableOpacity>
+    );
+  }
+  return <View style={wrapperStyle}>{inner}</View>;
 }
 
 const s = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm + 4,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md - 2,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
+  cardWithAccent: { flexDirection: 'row' },
+  accent: { width: 4 },
+  content:        { padding: spacing.md, flex: 1 },
+  contentCompact: { padding: spacing.sm + 4, flex: 1 },
 });

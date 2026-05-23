@@ -1,32 +1,49 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, font, rgba } from '../theme';
 
-type Variant = 'primary' | 'success' | 'warning' | 'danger' | 'muted' | 'info';
+type Variant = 'primary' | 'success' | 'warning' | 'danger' | 'muted' | 'info' | 'secondary';
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const variantColors: Record<Variant, { bg: string; text: string; border: string }> = {
-  primary: { bg: colors.primaryFaded, text: colors.primary,  border: rgba(colors.primary, 0.25) },
-  success: { bg: colors.successFaded, text: colors.success,  border: rgba(colors.success, 0.25) },
-  warning: { bg: colors.warningFaded, text: colors.warning,  border: rgba(colors.warning, 0.25) },
-  danger:  { bg: colors.dangerFaded,  text: colors.danger,   border: rgba(colors.danger, 0.25) },
-  info:    { bg: colors.infoFaded,    text: colors.info,     border: rgba(colors.info, 0.25) },
-  muted:   { bg: colors.borderLight,  text: colors.textMuted, border: colors.border },
+const variantColors: Record<Variant, { bg: string; text: string }> = {
+  primary:   { bg: colors.primaryFaded,   text: colors.primary },
+  secondary: { bg: colors.secondaryFaded, text: colors.secondary },
+  success:   { bg: colors.successFaded,   text: colors.success },
+  warning:   { bg: colors.warningFaded,   text: colors.warning },
+  danger:    { bg: colors.dangerFaded,    text: colors.danger },
+  info:      { bg: colors.infoFaded,      text: colors.info },
+  muted:     { bg: colors.borderLight,    text: colors.textMuted },
 };
 
-export default function Badge({ label, variant = 'primary' }: { label: string; variant?: Variant }) {
+export default function Badge({
+  label, variant = 'primary', icon, soft = true,
+}: {
+  label: string;
+  variant?: Variant;
+  icon?: IoniconName;
+  /** Когато false — солидна версия с цвят като фон. */
+  soft?: boolean;
+}) {
   const c = variantColors[variant];
+  const bg = soft ? c.bg : c.text;
+  const fg = soft ? c.text : '#FFFFFF';
+
   return (
-    <View style={[s.badge, { backgroundColor: c.bg, borderColor: c.border }]}>
-      <Text style={[s.text, { color: c.text }]}>{label}</Text>
+    <View style={[s.badge, { backgroundColor: bg, borderColor: soft ? rgba(c.text, 0.18) : 'transparent' }]}>
+      {icon ? <Ionicons name={icon} size={12} color={fg} style={{ marginRight: 4 }} /> : null}
+      <Text style={[s.text, { color: fg }]}>{label}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
   },
