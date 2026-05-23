@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { colors, spacing, font, radius } from '../theme';
+import InputField from '../components/InputField';
+import Button from '../components/Button';
 
 export default function RegisterScreen({ navigation }: any) {
   const { register } = useAuth();
@@ -17,42 +21,60 @@ export default function RegisterScreen({ navigation }: any) {
     finally { setBusy(false); }
   };
 
+  const RoleBtn = ({ r, label, icon }: { r: 'user' | 'organizer'; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }) => {
+    const active = role === r;
+    return (
+      <TouchableOpacity style={[s.roleBtn, active && s.roleBtnActive]} onPress={() => setRole(r)} activeOpacity={0.8}>
+        <Ionicons name={icon} size={20} color={active ? '#fff' : colors.textSecondary} />
+        <Text style={[s.roleLabel, active && s.roleLabelActive]}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <View style={s.wrap}>
-      <Text style={s.title}>Регистрация</Text>
-      <TextInput style={s.input} placeholder="Пълно име" value={full_name} onChangeText={setName} />
-      <TextInput style={s.input} placeholder="Имейл" autoCapitalize="none"
-        keyboardType="email-address" value={email} onChangeText={setEmail} />
-      <TextInput style={s.input} placeholder="Парола (мин. 6 символа)" secureTextEntry
-        value={password} onChangeText={setPassword} />
-      <View style={s.row}>
-        <TouchableOpacity style={[s.roleBtn, role === 'user' && s.roleActive]} onPress={() => setRole('user')}>
-          <Text style={role === 'user' ? s.roleTextActive : s.roleText}>Потребител</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[s.roleBtn, role === 'organizer' && s.roleActive]} onPress={() => setRole('organizer')}>
-          <Text style={role === 'organizer' ? s.roleTextActive : s.roleText}>Организатор</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={s.btn} onPress={submit} disabled={busy}>
-        <Text style={s.btnText}>{busy ? '...' : 'Създай акаунт'}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={s.link}>Назад към вход</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView style={s.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={s.inner} keyboardShouldPersistTaps="handled">
+        <Text style={s.title}>Създайте акаунт</Text>
+        <Text style={s.subtitle}>Попълнете данните за регистрация</Text>
+
+        <InputField label="Пълно име" value={full_name} onChangeText={setName}
+          placeholder="Иван Иванов" required />
+        <InputField label="Имейл" value={email} onChangeText={setEmail}
+          autoCapitalize="none" keyboardType="email-address" placeholder="you@example.com" required />
+        <InputField label="Парола" value={password} onChangeText={setPassword}
+          secureTextEntry placeholder="Мин. 6 символа" required />
+
+        <Text style={s.roleTitle}>Изберете роля</Text>
+        <View style={s.roleRow}>
+          <RoleBtn r="user" label="Потребител" icon="person-outline" />
+          <RoleBtn r="organizer" label="Организатор" icon="briefcase-outline" />
+        </View>
+
+        <Button label="Създай акаунт" onPress={submit} loading={busy} style={{ marginTop: spacing.lg }} />
+
+        <Text style={s.link} onPress={() => navigation.goBack()}>
+          Вече имате акаунт?{' '}
+          <Text style={{ fontWeight: font.semibold }}>Влезте</Text>
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
-  wrap: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12 },
-  row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  roleBtn: { flex: 1, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ccc', alignItems: 'center' },
-  roleActive: { backgroundColor: '#1F3864', borderColor: '#1F3864' },
-  roleText: { color: '#333' },
-  roleTextActive: { color: '#fff', fontWeight: '600' },
-  btn: { backgroundColor: '#1F3864', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 8 },
-  btnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  link: { textAlign: 'center', marginTop: 16, color: '#2E75B6' },
+  wrap: { flex: 1, backgroundColor: colors.background },
+  inner: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xxl, paddingVertical: spacing.xxxl },
+  title: { fontSize: font.size.xxl, fontWeight: font.bold, color: colors.textPrimary, textAlign: 'center' },
+  subtitle: { fontSize: font.size.sm, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.xxl, marginTop: spacing.xs },
+  roleTitle: { fontSize: font.size.sm, fontWeight: font.medium, color: colors.textSecondary, marginBottom: spacing.sm },
+  roleRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  roleBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+    paddingVertical: spacing.md, borderRadius: radius.sm,
+    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
+  },
+  roleBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  roleLabel: { fontSize: font.size.sm, fontWeight: font.medium, color: colors.textSecondary },
+  roleLabelActive: { color: '#fff' },
+  link: { textAlign: 'center', marginTop: spacing.xl, color: colors.primaryLight, fontSize: font.size.md },
 });

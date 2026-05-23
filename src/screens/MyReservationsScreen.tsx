@@ -1,7 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
+import { colors, spacing, font } from '../theme';
+import Card from '../components/Card';
+import Badge from '../components/Badge';
+import MetaRow from '../components/MetaRow';
+import Button from '../components/Button';
+import EmptyState from '../components/EmptyState';
 
 export default function MyReservationsScreen() {
   const [rows, setRows] = useState<any[]>([]);
@@ -14,9 +20,9 @@ export default function MyReservationsScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const cancel = (id: number) => {
-    Alert.alert('Отказ', 'Сигурни ли сте, че желаете да откажете резервацията?', [
+    Alert.alert('Отказ на резервация', 'Сигурни ли сте, че желаете да откажете?', [
       { text: 'Не' },
-      { text: 'Да', style: 'destructive', onPress: async () => {
+      { text: 'Да, откажи', style: 'destructive', onPress: async () => {
           await api.cancelReservation(id); load();
       }}
     ]);
@@ -24,31 +30,36 @@ export default function MyReservationsScreen() {
 
   return (
     <FlatList
-      contentContainerStyle={{ padding: 16 }}
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={s.list}
       data={rows}
       keyExtractor={(r) => String(r.id)}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-      ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>Нямате резервации.</Text>}
-      renderItem={({ item }) => (
-        <View style={[s.card, item.status === 'cancelled' && { opacity: 0.5 }]}>
-          <Text style={s.title}>{item.title}</Text>
-          <Text style={s.meta}>{new Date(item.start_at).toLocaleString('bg-BG')}</Text>
-          {item.location ? <Text style={s.meta}>📍 {item.location}</Text> : null}
-          <Text style={s.meta}>Места: {item.seats} · Статус: {item.status === 'confirmed' ? 'потвърдена' : 'отказана'}</Text>
-          {item.status === 'confirmed' && (
-            <TouchableOpacity style={s.cancelBtn} onPress={() => cancel(item.id)}>
-              <Text style={{ color: '#a00', fontWeight: '600' }}>Откажи резервация</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
+      ListEmptyComponent={<EmptyState icon="bookmark-outline" message="Все още нямате резервации." />}
+      renderItem={({ item }) => {
+        const cancelled = item.status === 'cancelled';
+        return (
+          <Card disabled={cancelled}>
+            <View style={s.header}>
+              <Text style={s.title}>{item.title}</Text>
+              <Badge label={cancelled ? 'Отказана' : 'Потвърдена'} variant={cancelled ? 'muted' : 'success'} />
+            </View>
+            <MetaRow icon="calendar-outline" text={new Date(item.start_at).toLocaleString('bg-BG')} />
+            {item.location ? <MetaRow icon="location-outline" text={item.location} /> : null}
+            <MetaRow icon="people-outline" text={`${item.seats} ${item.seats === 1 ? 'място' : 'места'}`} />
+            {!cancelled && (
+              <Button label="Откажи резервация" variant="danger" onPress={() => cancel(item.id)}
+                style={{ marginTop: spacing.md }} />
+            )}
+          </Card>
+        );
+      }}
     />
   );
 }
 
 const s = StyleSheet.create({
-  card: { backgroundColor: '#fff', padding: 14, borderRadius: 10, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
-  title: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  meta: { color: '#555', marginBottom: 2 },
-  cancelBtn: { marginTop: 10 },
+  list: { padding: spacing.lg, paddingBottom: spacing.xxxl },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm },
+  title: { fontSize: font.size.lg, fontWeight: font.bold, color: colors.textPrimary, flex: 1, marginRight: spacing.sm },
 });

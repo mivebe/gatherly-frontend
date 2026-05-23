@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { colors, spacing, font, radius, shadow } from '../theme';
+import InputField from '../components/InputField';
+import Button from '../components/Button';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const logo = require('../../assets/logo.png');
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -16,27 +22,48 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   return (
-    <View style={s.wrap}>
-      <Text style={s.title}>Вход</Text>
-      <TextInput style={s.input} placeholder="Имейл" autoCapitalize="none"
-        keyboardType="email-address" value={email} onChangeText={setEmail} />
-      <TextInput style={s.input} placeholder="Парола" secureTextEntry
-        value={password} onChangeText={setPassword} />
-      <TouchableOpacity style={s.btn} onPress={submit} disabled={busy}>
-        <Text style={s.btnText}>{busy ? '...' : 'Влез'}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={s.link}>Нямате акаунт? Регистрирайте се.</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView style={s.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={s.inner}>
+        {/* Лого */}
+        <View style={s.logoWrap}>
+          <Image source={logo} style={s.logo} />
+          <Text style={s.brand}>EventBook</Text>
+          <Text style={s.tagline}>Управление на резервации и събития</Text>
+        </View>
+
+        {/* Форма карта */}
+        <View style={s.formCard}>
+          <Text style={s.formTitle}>Добре дошли</Text>
+          <InputField label="Имейл" value={email} onChangeText={setEmail}
+            autoCapitalize="none" keyboardType="email-address" placeholder="you@example.com" />
+          <InputField label="Парола" value={password} onChangeText={setPassword}
+            secureTextEntry placeholder="Въведете парола" />
+          <Button label="Влез" onPress={submit} loading={busy} style={{ marginTop: spacing.sm }} />
+        </View>
+
+        <Text style={s.link} onPress={() => navigation.navigate('Register')}>
+          Нямате акаунт?{' '}
+          <Text style={{ fontWeight: font.semibold }}>Регистрирайте се</Text>
+        </Text>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
-  wrap: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12 },
-  btn: { backgroundColor: '#1F3864', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 8 },
-  btnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  link: { textAlign: 'center', marginTop: 16, color: '#2E75B6' },
+  wrap: { flex: 1, backgroundColor: colors.background },
+  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl },
+
+  logoWrap: { alignItems: 'center', marginBottom: spacing.xxl },
+  logo: { width: 80, height: 80, marginBottom: spacing.md },
+  brand: { fontSize: font.size.hero, fontWeight: font.bold, color: colors.primary, letterSpacing: -0.5 },
+  tagline: { fontSize: font.size.sm, color: colors.textMuted, marginTop: spacing.xs, textAlign: 'center' },
+
+  formCard: {
+    backgroundColor: colors.surface, borderRadius: radius.lg,
+    padding: spacing.xl, ...shadow.md,
+  },
+  formTitle: { fontSize: font.size.xl, fontWeight: font.bold, color: colors.textPrimary, marginBottom: spacing.lg },
+
+  link: { textAlign: 'center', marginTop: spacing.xl, color: colors.primaryLight, fontSize: font.size.md },
 });

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { api } from '../api/client';
+import { colors, spacing, font } from '../theme';
+import InputField from '../components/InputField';
+import Button from '../components/Button';
 
 export default function CreateEventScreen({ navigation }: any) {
   const [title, setTitle] = useState('');
@@ -8,13 +11,15 @@ export default function CreateEventScreen({ navigation }: any) {
   const [location, setLocation] = useState('');
   const [startAt, setStartAt] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 16));
   const [capacity, setCapacity] = useState('20');
+  const [busy, setBusy] = useState(false);
 
   const submit = async () => {
+    if (!title || !startAt || !capacity) {
+      Alert.alert('Грешка', 'Моля, попълнете заглавие, дата и капацитет.');
+      return;
+    }
+    setBusy(true);
     try {
-      if (!title || !startAt || !capacity) {
-        Alert.alert('Грешка', 'Моля, попълнете заглавие, дата и капацитет.');
-        return;
-      }
       await api.createEvent({
         title,
         description: description || undefined,
@@ -22,41 +27,34 @@ export default function CreateEventScreen({ navigation }: any) {
         start_at: new Date(startAt).toISOString(),
         capacity: Number(capacity),
       });
-      Alert.alert('Готово', 'Събитието е създадено.');
+      Alert.alert('Готово', 'Събитието е създадено успешно.');
       navigation.goBack();
     } catch (e: any) {
       Alert.alert('Грешка', e.message);
-    }
+    } finally { setBusy(false); }
   };
 
   return (
-    <ScrollView contentContainerStyle={s.wrap}>
-      <Text style={s.label}>Заглавие *</Text>
-      <TextInput style={s.input} value={title} onChangeText={setTitle} />
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={s.wrap} keyboardShouldPersistTaps="handled">
+        <InputField label="Заглавие" required value={title} onChangeText={setTitle}
+          placeholder="Напр. Концерт в парка" />
+        <InputField label="Описание" value={description} onChangeText={setDescription}
+          placeholder="Кратко описание на събитието" multiline style={{ height: 90, textAlignVertical: 'top' }} />
+        <InputField label="Място" value={location} onChangeText={setLocation}
+          placeholder="Адрес или локация" />
+        <InputField label="Начало (YYYY-MM-DDTHH:MM)" required value={startAt} onChangeText={setStartAt}
+          autoCapitalize="none" placeholder="2026-06-15T18:00" />
+        <InputField label="Капацитет" required value={capacity} onChangeText={setCapacity}
+          keyboardType="numeric" placeholder="Макс. брой участници" />
 
-      <Text style={s.label}>Описание</Text>
-      <TextInput style={[s.input, { height: 80 }]} value={description} onChangeText={setDescription} multiline />
-
-      <Text style={s.label}>Място</Text>
-      <TextInput style={s.input} value={location} onChangeText={setLocation} />
-
-      <Text style={s.label}>Начало (YYYY-MM-DDTHH:MM) *</Text>
-      <TextInput style={s.input} value={startAt} onChangeText={setStartAt} autoCapitalize="none" />
-
-      <Text style={s.label}>Капацитет *</Text>
-      <TextInput style={s.input} value={capacity} onChangeText={setCapacity} keyboardType="numeric" />
-
-      <TouchableOpacity style={s.btn} onPress={submit}>
-        <Text style={s.btnText}>Създай събитие</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <Button label="Създай събитие" onPress={submit} loading={busy} style={{ marginTop: spacing.lg }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
-  wrap: { padding: 20, backgroundColor: '#fff' },
-  label: { marginTop: 10, marginBottom: 4, fontWeight: '600', color: '#333' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 },
-  btn: { backgroundColor: '#1F3864', padding: 14, borderRadius: 10, alignItems: 'center', marginTop: 24 },
-  btnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  wrap: { padding: spacing.xl, paddingBottom: spacing.xxxl },
 });
