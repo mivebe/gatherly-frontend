@@ -29,6 +29,8 @@ jobs:
 
       - name: Export web build
         run: npx expo export --platform web
+        env:
+          EXPO_PUBLIC_API_URL: https://gatherly-api.fly.dev/api
 
       - name: SPA fallback (404 → index.html)
         run: cp dist/index.html dist/404.html
