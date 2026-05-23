@@ -29,7 +29,7 @@
       "expo-font"
     ],
     "experiments": {
-      "baseUrl": "/diploma-frontend"
+      "baseUrl": "/gatherly-frontend"
     },
     "extra": {
       "eas": {

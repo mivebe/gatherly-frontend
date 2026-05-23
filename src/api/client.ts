@@ -1,9 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL;
-if (!API_URL) {
+function resolveApiUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL;
+  if (fromEnv) return fromEnv;
+
+  // Dev fallback: point at a local backend on port 4000.
+  // Web/iOS simulator can reach the host via localhost; Android emulator uses 10.0.2.2.
+  if (__DEV__) {
+    const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+    return `http://${host}:4000/api`;
+  }
+
   throw new Error('EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and fill it in.');
 }
+
+export const API_URL = resolveApiUrl();
 
 const TOKEN_KEY = 'gatherly_token';
 
