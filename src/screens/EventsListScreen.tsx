@@ -12,18 +12,20 @@ import EmptyState from '../components/EmptyState';
 import Badge from '../components/Badge';
 import SectionHeader from '../components/SectionHeader';
 import DateBadge from '../components/DateBadge';
+import { SkeletonList } from '../components/Skeleton';
 
 export default function EventsListScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [events, setEvents] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try { setEvents(await api.listEvents()); }
-    catch {} finally { setLoading(false); }
+    catch {} finally { setLoading(false); setInitialLoading(false); }
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -41,17 +43,25 @@ export default function EventsListScreen({ navigation }: any) {
     <FlatList
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={s.list}
-      data={[
-        ...(todayEvents.length    ? [{ _section: 'Днес' },        ...todayEvents]    : []),
-        ...(upcomingEvents.length ? [{ _section: 'Предстоящи' }, ...upcomingEvents] : []),
-        ...(filtered.length === 0 ? [{ _empty: true }]                              : []),
-      ]}
-      keyExtractor={(item: any, i) => item._section || item._empty ? `s-${i}` : String(item.id)}
+      data={
+        initialLoading
+          ? [{ _skeleton: true }]
+          : [
+              ...(todayEvents.length    ? [{ _section: 'Днес' },        ...todayEvents]    : []),
+              ...(upcomingEvents.length ? [{ _section: 'Предстоящи' }, ...upcomingEvents] : []),
+              ...(filtered.length === 0 ? [{ _empty: true }]                              : []),
+            ]
+      }
+      keyExtractor={(item: any, i) => item._section || item._empty || item._skeleton ? `s-${i}` : String(item.id)}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
       ListHeaderComponent={
         <View>
           <Text style={s.headerTitle}>Открийте събития</Text>
-          <Text style={s.headerSub}>{filtered.length} {filtered.length === 1 ? 'събитие' : 'събития'} налични</Text>
+          <Text style={s.headerSub}>
+            {initialLoading
+              ? 'Зареждане…'
+              : `${filtered.length} ${filtered.length === 1 ? 'събитие' : 'събития'} налични`}
+          </Text>
 
           <View style={s.searchWrap}>
             <Ionicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: spacing.sm }} />
@@ -71,6 +81,7 @@ export default function EventsListScreen({ navigation }: any) {
         </View>
       }
       renderItem={({ item }: any) => {
+        if (item._skeleton) return <SkeletonList count={4} />;
         if (item._empty)   return <EmptyState icon="ticket-outline" message="Няма предстоящи събития." />;
         if (item._section) return <SectionHeader title={item._section} />;
 

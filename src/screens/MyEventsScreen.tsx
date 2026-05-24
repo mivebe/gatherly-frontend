@@ -11,16 +11,19 @@ import MetaRow from '../components/MetaRow';
 import CapacityBar from '../components/CapacityBar';
 import EmptyState from '../components/EmptyState';
 import DateBadge from '../components/DateBadge';
+import { SkeletonList } from '../components/Skeleton';
 
 export default function MyEventsScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setRows(await api.myEvents()); } finally { setLoading(false); }
+    try { setRows(await api.myEvents()); }
+    finally { setLoading(false); setInitialLoading(false); }
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -42,7 +45,9 @@ export default function MyEventsScreen({ navigation }: any) {
           ) : null
         }
         ListEmptyComponent={
-          <EmptyState icon="briefcase-outline" message="Все още нямате създадени събития." />
+          initialLoading
+            ? <SkeletonList count={3} />
+            : <EmptyState icon="briefcase-outline" message="Все още нямате създадени събития." />
         }
         renderItem={({ item }) => {
           const start     = new Date(item.start_at);

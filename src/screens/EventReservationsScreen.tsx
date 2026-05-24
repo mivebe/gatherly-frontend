@@ -7,17 +7,20 @@ import { spacing, font, radius, depth, ThemeColors } from '../theme';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
 import Avatar from '../components/Avatar';
+import { SkeletonList } from '../components/Skeleton';
 
 export default function EventReservationsScreen({ route }: any) {
   const { colors } = useTheme();
   const { id } = route.params;
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setRows(await api.eventReservations(id)); } finally { setLoading(false); }
+    try { setRows(await api.eventReservations(id)); }
+    finally { setLoading(false); setInitialLoading(false); }
   }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -44,7 +47,11 @@ export default function EventReservationsScreen({ route }: any) {
           </View>
         </View>
       }
-      ListEmptyComponent={<EmptyState icon="people-outline" message="Все още няма резервации за това събитие." />}
+      ListEmptyComponent={
+        initialLoading
+          ? <SkeletonList count={3} />
+          : <EmptyState icon="people-outline" message="Все още няма резервации за това събитие." />
+      }
       renderItem={({ item }) => {
         const cancelled = item.status === 'cancelled';
         return (

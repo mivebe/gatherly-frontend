@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { ToastProvider } from './src/context/ToastContext';
 import RootNavigator from './src/navigation';
 import GetTheAppButton from './src/components/GetTheAppButton';
 
@@ -17,11 +18,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <RootNavigator />
-            <GetTheAppButton />
-            <ThemedStatusBar />
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <RootNavigator />
+              <GetTheAppButton />
+              <ThemedStatusBar />
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

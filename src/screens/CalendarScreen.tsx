@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useFocusEffect } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import { spacing, font, radius, depth, ThemeColors } from '../theme';
 import Card from '../components/Card';
 import MetaRow from '../components/MetaRow';
 import DateBadge from '../components/DateBadge';
+import { SkeletonList } from '../components/Skeleton';
 
 LocaleConfig.locales['bg'] = {
   monthNames: ['Януари','Февруари','Март','Април','Май','Юни','Юли','Август','Септември','Октомври','Ноември','Декември'],
@@ -23,9 +24,15 @@ export default function CalendarScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [events, setEvents]     = useState<any[]>([]);
   const [selected, setSelected] = useState<string>('');
+  const [loading, setLoading]   = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const s = useMemo(() => createStyles(colors), [colors]);
 
-  const load = useCallback(async () => { setEvents(await api.listEvents()); }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setEvents(await api.listEvents()); }
+    finally { setLoading(false); setInitialLoading(false); }
+  }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const marked: any = {};
@@ -73,8 +80,13 @@ export default function CalendarScreen({ navigation }: any) {
         />
       </View>
 
-      <ScrollView contentContainerStyle={s.list}>
-        {selected ? (
+      <ScrollView
+        contentContainerStyle={s.list}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
+      >
+        {initialLoading ? (
+          <SkeletonList count={3} />
+        ) : selected ? (
           dayEvents.length ? (
             <>
               <Text style={s.dayLabel}>

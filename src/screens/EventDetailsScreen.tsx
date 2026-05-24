@@ -1,38 +1,108 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import {
+  View, Text, StyleSheet, Alert, ScrollView, ActivityIndicator,
+  Share, TouchableOpacity, Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 import { spacing, font, radius, depth, rgba, ThemeColors } from '../theme';
 import CapacityBar from '../components/CapacityBar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
+import ConfirmModal from '../components/ConfirmModal';
+import { buildEventShareUrl } from '../navigation';
 
 export default function EventDetailsScreen({ route, navigation }: any) {
   const { colors } = useTheme();
-  const { id } = route.params;
+  const toast = useToast();
+  const id = Number(route.params.id);
   const { user } = useAuth();
   const [event, setEvent] = useState<any>(null);
   const [reserving, setReserving] = useState(false);
+  const [confirmReserve, setConfirmReserve] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const s = useMemo(() => createStyles(colors), [colors]);
 
   const load = useCallback(async () => { setEvent(await api.getEvent(id)); }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const share = useCallback(async () => {
+    if (!event) return;
+    const url = buildEventShareUrl(event.id);
+    const eventDate = new Date(event.start_at);
+    const when = eventDate.toLocaleDateString('bg-BG', {
+      weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
+    });
+    const timeStr = eventDate.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+    const message = `${event.title}\n${when} · ${timeStr}${event.location ? `\n${event.location}` : ''}\n\n${url}`;
+    try {
+      await Share.share(
+        Platform.OS === 'ios'
+          ? { url, message: `${event.title}\n${when} · ${timeStr}${event.location ? `\n${event.location}` : ''}` }
+          : { message, title: event.title },
+      );
+    } catch {
+      // user dismissed the share sheet — no-op
+    }
+  }, [event]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={share}
+          hitSlop={12}
+          disabled={!event}
+          style={{ paddingHorizontal: spacing.sm, opacity: event ? 1 : 0.4 }}
+        >
+          <Ionicons
+            name={Platform.OS === 'ios' ? 'share-outline' : 'share-social-outline'}
+            size={22}
+            color={colors.text}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, share, event, colors.text]);
+
   const reserve = async () => {
+    setConfirmReserve(false);
     setReserving(true);
     try {
       await api.reserve(id, 1);
-      Alert.alert('Готово', 'Резервацията е направена успешно.');
+      toast.success('Резервацията е направена успешно.');
       load();
     } catch (e: any) {
-      const msg = e.message === 'NO_SEATS_AVAILABLE' ? 'Няма свободни места.'
-                : e.message === 'ALREADY_RESERVED'   ? 'Вече имате резервация за това събитие.'
-                : e.message;
-      Alert.alert('Грешка', msg);
+      if (e.message === 'ALREADY_RESERVED') {
+        toast.warning('Вече имате резервация за това събитие.');
+      } else if (e.message === 'NO_SEATS_AVAILABLE') {
+        toast.error('Няма свободни места.');
+      } else if (e.message === 'EVENT_CANCELLED') {
+        toast.error('Събитието е отказано.');
+      } else if (e.message === 'EVENT_PAST') {
+        toast.error('Събитието вече е приключило.');
+      } else {
+        toast.error(e.message);
+      }
     } finally { setReserving(false); }
+  };
+
+  const doDelete = async () => {
+    setDeleting(true);
+    try {
+      await api.deleteEvent(id);
+      setConfirmDelete(false);
+      navigation.goBack();
+    } catch (e: any) {
+      Alert.alert('Грешка', e.message);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (!event) return <View style={s.loading}><ActivityIndicator size="large" color={colors.primary} /></View>;
@@ -41,87 +111,137 @@ export default function EventDetailsScreen({ route, navigation }: any) {
   const cancelled  = event.status === 'cancelled';
   const eventDate  = new Date(event.start_at);
   const heroAccent = cancelled ? colors.danger : isFull ? colors.warning : colors.primary;
+  const isOwner    = user?.role === 'organizer' && event.organizer_id === user.id;
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.wrap}>
-      <View style={[s.hero, { backgroundColor: heroAccent }]}>
-        <View style={s.heroOverlay} />
-        <View style={s.heroContent}>
-          <View style={s.heroDateBlock}>
-            <Text style={s.heroMonth}>
-              {eventDate.toLocaleString('bg-BG', { month: 'short' }).toUpperCase().replace('.', '')}
-            </Text>
-            <Text style={s.heroDay}>{eventDate.getDate()}</Text>
-            <Text style={s.heroYear}>{eventDate.getFullYear()}</Text>
-          </View>
-          <View style={s.heroText}>
-            <View style={s.heroBadgeRow}>
-              {cancelled
-                ? <Badge label="Отменено"  variant="danger"  icon="close-circle"     soft={false} />
-                : isFull
-                  ? <Badge label="Запълнено" variant="warning" icon="alert-circle"    soft={false} />
-                  : <Badge label="Активно"   variant="success" icon="checkmark-circle" soft={false} />}
+    <>
+      <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.wrap}>
+        <View style={[s.hero, { backgroundColor: heroAccent }]}>
+          <View style={s.heroOverlay} />
+          <View style={s.heroContent}>
+            <View style={s.heroDateBlock}>
+              <Text style={s.heroMonth}>
+                {eventDate.toLocaleString('bg-BG', { month: 'short' }).toUpperCase().replace('.', '')}
+              </Text>
+              <Text style={s.heroDay}>{eventDate.getDate()}</Text>
+              <Text style={s.heroYear}>{eventDate.getFullYear()}</Text>
             </View>
-            <Text style={s.heroTitle}>{event.title}</Text>
-            <Text style={s.heroOrganizer}>от {event.organizer_name}</Text>
+            <View style={s.heroText}>
+              <View style={s.heroBadgeRow}>
+                {cancelled
+                  ? <Badge label="Отменено"  variant="danger"  icon="close-circle"     soft={false} />
+                  : isFull
+                    ? <Badge label="Запълнено" variant="warning" icon="alert-circle"    soft={false} />
+                    : <Badge label="Активно"   variant="success" icon="checkmark-circle" soft={false} />}
+              </View>
+              <Text style={s.heroTitle}>{event.title}</Text>
+              <Text style={s.heroOrganizer}>от {event.organizer_name}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={s.infoCard}>
-        <View style={s.gridRow}>
-          <InfoChip
-            label="Дата"
-            value={eventDate.toLocaleDateString('bg-BG', { day: 'numeric', month: 'long' })}
-            icon="calendar" color={colors.primary}
-          />
-          <InfoChip
-            label="Час"
-            value={eventDate.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
-            icon="time" color={colors.info}
-          />
+        <View style={s.infoCard}>
+          <View style={s.gridRow}>
+            <InfoChip
+              label="Дата"
+              value={eventDate.toLocaleDateString('bg-BG', { day: 'numeric', month: 'long' })}
+              icon="calendar" color={colors.primary}
+            />
+            <InfoChip
+              label="Час"
+              value={eventDate.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
+              icon="time" color={colors.info}
+            />
+          </View>
+
+          {event.location ? (
+            <View style={s.locationRow}>
+              <View style={[s.iconChip, { backgroundColor: rgba(colors.secondary, 0.12) }]}>
+                <Ionicons name="location" size={18} color={colors.secondary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.metaLabel}>Локация</Text>
+                <Text style={s.metaValue}>{event.location}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={s.divider} />
+          <CapacityBar available={event.available_seats} capacity={event.capacity} />
         </View>
 
-        {event.location ? (
-          <View style={s.locationRow}>
-            <View style={[s.iconChip, { backgroundColor: rgba(colors.secondary, 0.12) }]}>
-              <Ionicons name="location" size={18} color={colors.secondary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.metaLabel}>Локация</Text>
-              <Text style={s.metaValue}>{event.location}</Text>
+        {event.description ? (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>За събитието</Text>
+            <View style={s.descCard}>
+              <Text style={s.desc}>{event.description}</Text>
             </View>
           </View>
         ) : null}
 
-        <View style={s.divider} />
-        <CapacityBar available={event.available_seats} capacity={event.capacity} />
-      </View>
-
-      {event.description ? (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>За събитието</Text>
-          <View style={s.descCard}>
-            <Text style={s.desc}>{event.description}</Text>
-          </View>
-        </View>
-      ) : null}
-
-      <View style={s.actions}>
-        {user?.role === 'user' && !isFull && !cancelled && (
-          <Button label="Резервирай място" onPress={reserve} loading={reserving} size="lg" icon="ticket" />
-        )}
-        {user?.role === 'organizer' && event.organizer_id === user.id && (
+        <View style={s.actions}>
+          {user?.role === 'user' && !isFull && !cancelled && (
+            <Button
+              label="Резервирай място"
+              onPress={() => setConfirmReserve(true)}
+              loading={reserving}
+              size="lg"
+              icon="ticket"
+            />
+          )}
+          {isOwner && (
+            <>
+              <Button
+                label="Виж резервациите"
+                variant="outline"
+                size="lg"
+                icon="people-outline"
+                onPress={() => navigation.navigate('EventReservations', { id: event.id, title: event.title })}
+              />
+              {!cancelled && (
+                <Button
+                  label="Изтрий събитието"
+                  variant="ghost"
+                  size="md"
+                  icon="trash-outline"
+                  onPress={() => setConfirmDelete(true)}
+                  style={{ borderWidth: 1, borderColor: rgba(colors.danger, 0.4) }}
+                />
+              )}
+            </>
+          )}
           <Button
-            label="Виж резервациите"
-            variant="outline"
-            size="lg"
-            icon="people-outline"
-            onPress={() => navigation.navigate('EventReservations', { id: event.id, title: event.title })}
+            label="Сподели събитието"
+            variant="ghost"
+            size="md"
+            icon={Platform.OS === 'ios' ? 'share-outline' : 'share-social-outline'}
+            onPress={share}
           />
-        )}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+
+      <ConfirmModal
+        visible={confirmReserve}
+        title="Потвърди резервацията"
+        message={`Ще резервирате 1 място за „${event.title}".`}
+        icon="ticket-outline"
+        confirmLabel="Резервирай"
+        onConfirm={reserve}
+        onCancel={() => setConfirmReserve(false)}
+      />
+
+      <ConfirmModal
+        visible={confirmDelete}
+        title="Изтриване на събитие"
+        message={`Сигурни ли сте, че желаете да изтриете „${event.title}"? Всички резервации ще бъдат отменени.`}
+        icon="trash-outline"
+        confirmLabel="Изтрий"
+        destructive
+        loading={deleting}
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+    </>
   );
 }
 

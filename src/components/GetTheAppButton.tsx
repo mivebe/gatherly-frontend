@@ -93,7 +93,9 @@ const styles = StyleSheet.create({
   anchor: {
     position: ('fixed' as any),
     top: spacing.sm,
-    right: spacing.md,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
     zIndex: 9999,
   },
   btn: {

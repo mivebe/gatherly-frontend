@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -105,6 +105,40 @@ function OrganizerTabs() {
   );
 }
 
+const WEB_BASE_URL = 'https://gatherly.app';
+
+export const linking: LinkingOptions<any> = {
+  prefixes: [
+    'gatherly://',
+    WEB_BASE_URL,
+    `${WEB_BASE_URL}/`,
+  ],
+  config: {
+    initialRouteName: 'Home',
+    screens: {
+      Home: {
+        screens: {
+          'Събития':   'events',
+          'Календар':  'calendar',
+          'Резервации':'reservations',
+          'Моите събития': 'my-events',
+          'Профил':    'profile',
+        },
+      },
+      EventDetails:      'event/:id',
+      EventReservations: 'event/:id/reservations',
+      CreateEvent:       'create',
+      Login:             'login',
+      Register:          'register',
+    },
+  },
+};
+
+export function buildEventShareUrl(eventId: number): string {
+  if (Platform.OS === 'web') return `${WEB_BASE_URL}/event/${eventId}`;
+  return `${WEB_BASE_URL}/event/${eventId}`;
+}
+
 export default function RootNavigator() {
   const { user, loading } = useAuth();
   const { colors, isDark } = useTheme();
@@ -133,7 +167,7 @@ export default function RootNavigator() {
   );
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={navTheme} linking={linking}>
       {user ? (
         <AppStack.Navigator screenOptions={stackHeaderOptions}>
           <AppStack.Screen name="Home" options={{ headerShown: false }}

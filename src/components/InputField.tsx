@@ -12,15 +12,26 @@ type Props = TextInputProps & {
   icon?: IoniconName;
   rightIcon?: IoniconName;
   onRightIconPress?: () => void;
+  error?: string | null;
+  hint?: string;
 };
 
 export default function InputField({
   label, required, icon, rightIcon, onRightIconPress,
-  style, multiline, onFocus, onBlur, ...rest
+  error, hint,
+  style, multiline, onFocus, onBlur, editable, ...rest
 }: Props) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const hasError = !!error;
+  const borderColor = hasError
+    ? colors.danger
+    : focused ? colors.primary : colors.border;
+  const iconColor = hasError
+    ? colors.danger
+    : focused ? colors.primary : colors.textMuted;
 
   return (
     <View style={styles.wrap}>
@@ -33,19 +44,26 @@ export default function InputField({
         style={[
           styles.inputWrap,
           multiline && styles.multiline,
-          focused && { borderColor: colors.primary, backgroundColor: colors.surface,
-                       shadowColor: colors.primary, shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+          { borderColor },
+          focused && !hasError && {
+            backgroundColor: colors.surface,
+            shadowColor: colors.primary, shadowOpacity: 0.12, shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 }, elevation: 2,
+          },
+          hasError && { backgroundColor: rgba(colors.danger, 0.04) },
+          editable === false && { opacity: 0.6 },
         ]}
       >
         {icon ? (
           <Ionicons name={icon} size={18}
-            color={focused ? colors.primary : colors.textMuted}
+            color={iconColor}
             style={{ marginRight: spacing.sm }} />
         ) : null}
         <TextInput
           style={[styles.input, multiline && { textAlignVertical: 'top' }, style]}
           placeholderTextColor={rgba(colors.textMuted.startsWith('#') ? colors.textMuted : '#94A3B8', 0.85)}
           multiline={multiline}
+          editable={editable}
           onFocus={(e) => { setFocused(true); onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); onBlur?.(e); }}
           {...rest}
@@ -56,6 +74,15 @@ export default function InputField({
           </TouchableOpacity>
         ) : null}
       </View>
+
+      {hasError ? (
+        <View style={styles.feedback}>
+          <Ionicons name="alert-circle" size={14} color={colors.danger} />
+          <Text style={[styles.feedbackText, { color: colors.danger }]}>{error}</Text>
+        </View>
+      ) : hint ? (
+        <Text style={styles.hint}>{hint}</Text>
+      ) : null}
     </View>
   );
 }
@@ -69,7 +96,6 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'center',
       backgroundColor: colors.surfaceAlt,
       borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       paddingHorizontal: spacing.md,
       minHeight: 50,
@@ -80,6 +106,15 @@ function createStyles(colors: ThemeColors) {
       fontSize: font.size.md,
       color: colors.text,
       paddingVertical: spacing.sm + 4,
+    },
+    feedback: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+      marginTop: spacing.xs + 2,
+    },
+    feedbackText: { fontSize: font.size.xs, fontWeight: font.medium },
+    hint: {
+      fontSize: font.size.xs, color: colors.textMuted,
+      marginTop: spacing.xs + 2,
     },
   });
 }

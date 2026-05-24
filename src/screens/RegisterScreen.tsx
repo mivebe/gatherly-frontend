@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Alert,
+  View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,33 @@ import InputField from '../components/InputField';
 import Button from '../components/Button';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+type Role = 'user' | 'organizer';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PW_MIN = 6;
+
+type Errors = {
+  full_name?: string;
+  email?: string;
+  password?: string;
+  form?: string;
+};
+
+function validate(name: string, email: string, password: string): Errors {
+  const errs: Errors = {};
+  const trimmedName = name.trim();
+  if (!trimmedName) errs.full_name = 'Името е задължително.';
+  else if (trimmedName.length < 2) errs.full_name = 'Името трябва да е поне 2 символа.';
+
+  const trimmedEmail = email.trim();
+  if (!trimmedEmail) errs.email = 'Имейлът е задължителен.';
+  else if (!EMAIL_RE.test(trimmedEmail)) errs.email = 'Невалиден формат на имейл.';
+
+  if (!password) errs.password = 'Паролата е задължителна.';
+  else if (password.length < PW_MIN) errs.password = `Паролата трябва да е поне ${PW_MIN} символа.`;
+
+  return errs;
+}
 
 export default function RegisterScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -19,15 +46,38 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [role, setRole] = useState<'user' | 'organizer'>('user');
+  const [role, setRole] = useState<Role>('user');
   const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const s = useMemo(() => createStyles(colors), [colors]);
 
   const submit = async () => {
+    setSubmitted(true);
+    const e = validate(full_name, email, password);
+    setErrors(e);
+    if (Object.keys(e).length) return;
     setBusy(true);
-    try { await register({ full_name, email, password, role }); }
-    catch (e: any) { Alert.alert('Грешка', e.message); }
+    try {
+      await register({ full_name: full_name.trim(), email: email.trim(), password, role });
+    } catch (e: any) {
+      const msg = e?.message || '';
+      if (/exist|already|EMAIL/i.test(msg)) {
+        setErrors({ email: 'Този имейл вече е регистриран.' });
+      } else {
+        setErrors({ form: msg || 'Възникна грешка при регистрация.' });
+      }
+    }
     finally { setBusy(false); }
+  };
+
+  const revalidate = (next: Partial<{ full_name: string; email: string; password: string }>) => {
+    if (!submitted) return;
+    setErrors(validate(
+      next.full_name ?? full_name,
+      next.email ?? email,
+      next.password ?? password,
+    ));
   };
 
   return (
@@ -43,23 +93,38 @@ export default function RegisterScreen({ navigation }: any) {
         </View>
 
         <View style={s.card}>
+          {errors.form ? (
+            <View style={s.banner}>
+              <Ionicons name="alert-circle" size={18} color={colors.danger} />
+              <Text style={s.bannerText}>{errors.form}</Text>
+            </View>
+          ) : null}
+
           <InputField
             label="Пълно име" icon="person-outline" required
-            value={full_name} onChangeText={setName}
+            value={full_name}
+            onChangeText={(v) => { setName(v); revalidate({ full_name: v }); }}
             placeholder="Иван Иванов"
+            error={submitted ? errors.full_name : undefined}
           />
           <InputField
             label="Имейл" icon="mail-outline" required
-            value={email} onChangeText={setEmail}
-            autoCapitalize="none" keyboardType="email-address"
+            value={email}
+            onChangeText={(v) => { setEmail(v); revalidate({ email: v }); }}
+            autoCapitalize="none" autoCorrect={false}
+            keyboardType="email-address"
             placeholder="you@example.com"
+            error={submitted ? errors.email : undefined}
           />
           <InputField
             label="Парола" icon="lock-closed-outline" required
             rightIcon={showPw ? 'eye-off-outline' : 'eye-outline'}
             onRightIconPress={() => setShowPw(v => !v)}
-            value={password} onChangeText={setPassword}
-            secureTextEntry={!showPw} placeholder="Мин. 6 символа"
+            value={password}
+            onChangeText={(v) => { setPassword(v); revalidate({ password: v }); }}
+            secureTextEntry={!showPw} placeholder={`Мин. ${PW_MIN} символа`}
+            error={submitted ? errors.password : undefined}
+            hint={submitted ? undefined : `Поне ${PW_MIN} символа`}
           />
 
           <Text style={s.roleTitle}>Тип акаунт</Text>
@@ -87,9 +152,9 @@ export default function RegisterScreen({ navigation }: any) {
 function RoleCard({
   r, active, onSelect, icon, label, desc,
 }: {
-  r: 'user' | 'organizer';
+  r: Role;
   active: boolean;
-  onSelect: (r: 'user' | 'organizer') => void;
+  onSelect: (r: Role) => void;
   icon: IoniconName;
   label: string;
   desc: string;
@@ -133,6 +198,15 @@ function createStyles(colors: ThemeColors) {
       borderWidth: 1, borderColor: colors.borderLight,
       ...depth.level2,
     },
+
+    banner: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      backgroundColor: rgba(colors.danger, 0.10),
+      borderColor: rgba(colors.danger, 0.30), borderWidth: 1,
+      borderRadius: radius.md, padding: spacing.sm + 2,
+      marginBottom: spacing.md,
+    },
+    bannerText: { color: colors.danger, fontSize: font.size.sm, fontWeight: font.medium, flex: 1 },
 
     roleTitle: { fontSize: font.size.sm, fontWeight: font.medium, color: colors.textSecondary, marginBottom: spacing.sm, marginTop: spacing.xs },
     roleRow:   { flexDirection: 'row', gap: spacing.sm },
