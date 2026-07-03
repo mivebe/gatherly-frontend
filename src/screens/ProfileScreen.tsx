@@ -111,7 +111,7 @@ export default function ProfileScreen() {
             <Ionicons name="ticket" size={20} color={colors.textOnPrimary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.brandTitle}>EventBook</Text>
+            <Text style={s.brandTitle}>Gatherly</Text>
             <Text style={s.brandSub}>Версия 1.0 · резервации и събития</Text>
           </View>
         </View>

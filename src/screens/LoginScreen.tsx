@@ -72,7 +72,7 @@ export default function LoginScreen({ navigation }: any) {
           <View style={s.logoCircle}>
             <Ionicons name="ticket" size={36} color={colors.textOnPrimary} />
           </View>
-          <Text style={s.brand}>EventBook</Text>
+          <Text style={s.brand}>Gatherly</Text>
           <Text style={s.tagline}>Резервации и събития в едно приложение</Text>
         </View>
 
